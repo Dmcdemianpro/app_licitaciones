@@ -1,4 +1,8 @@
 // prisma/seed.ts
+import { config } from 'dotenv';
+// Cargar variables de entorno desde .env
+config();
+
 import { hash } from "bcrypt";
 import { prisma } from "../lib/prisma";
 
