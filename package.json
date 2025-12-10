@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "cross-env PORT=3001 next start",
     "lint": "next lint",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx --env-file=.env prisma/seed.ts"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx --env-file=.env prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.1",
