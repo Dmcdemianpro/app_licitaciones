@@ -92,7 +92,7 @@ model Ticket {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id])
+  owner User @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
@@ -119,8 +119,8 @@ model Licitacion {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  responsable User?       @relation("LicitacionResponsable", fields: [responsableId], references: [id])
-  createdBy   User        @relation("LicitacionCreatedBy", fields: [createdById], references: [id])
+  responsable User?       @relation("LicitacionResponsable", fields: [responsableId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdBy   User        @relation("LicitacionCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
   documentos  Documento[]
   notas       Nota[]
 
@@ -145,7 +145,7 @@ model Cita {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizador  User         @relation(fields: [organizadorId], references: [id])
+  organizador  User         @relation(fields: [organizadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   participantes CitaParticipante[]
 
   @@map("citas")
@@ -161,7 +161,7 @@ model CitaParticipante {
   asistio   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  cita User @relation("CitaUser", fields: [userId], references: [id])
+  cita User @relation("CitaUser", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user Cita @relation(fields: [citaId], references: [id], onDelete: Cascade)
 
   @@unique([citaId, userId])
@@ -201,7 +201,7 @@ model Documento {
   createdAt     DateTime @default(now())
 
   licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
-  uploadedBy User       @relation(fields: [uploadedById], references: [id])
+  uploadedBy User       @relation(fields: [uploadedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("documentos")
   @@index([licitacionId], map: "idx_documento_licitacion")
@@ -216,7 +216,7 @@ model Nota {
   updatedAt    DateTime @updatedAt
 
   licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
-  autor      User       @relation(fields: [autorId], references: [id])
+  autor      User       @relation(fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("notas")
   @@index([licitacionId], map: "idx_nota_licitacion")
@@ -233,7 +233,7 @@ model AuditoriaLog {
   userAgent String?  @map("user_agent") @db.NVarChar(500)
   createdAt DateTime @default(now())
 
-  user User? @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("auditoria_logs")
   @@index([userId], map: "idx_auditoria_user")

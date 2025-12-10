@@ -24,18 +24,24 @@ pnpm install
 
 ### 2️⃣ Configurar base de datos
 
-Crea el archivo `.env` en la raíz del proyecto:
+Copia el archivo de ejemplo y edítalo:
+
+```bash
+cp .env.example .env
+```
+
+Edita `.env` con tus valores reales:
 
 ```env
-DATABASE_URL="sqlserver://10.7.71.31:1433;database=DB_licitaciones;user=TU_USUARIO;password=TU_PASSWORD;encrypt=true;trustServerCertificate=true"
-NEXTAUTH_SECRET="genera-una-clave-aleatoria-de-al-menos-32-caracteres-aqui"
+DATABASE_URL="sqlserver://YOUR_SERVER:1433;database=YOUR_DATABASE_NAME;user=YOUR_USER;password=YOUR_PASSWORD;encrypt=true;trustServerCertificate=true"
+NEXTAUTH_SECRET="your-secret-key-min-32-characters-here"
 NEXTAUTH_URL="http://localhost:3001"
 AUTH_TRUST_HOST="true"
 NODE_ENV="development"
 ```
 
 **⚠️ IMPORTANTE:**
-- Cambia `TU_USUARIO` y `TU_PASSWORD` por tus credenciales de SQL Server
+- Reemplaza `YOUR_SERVER`, `YOUR_DATABASE_NAME`, `YOUR_USER`, `YOUR_PASSWORD` con tus credenciales de SQL Server
 - Para generar `NEXTAUTH_SECRET`, ejecuta en terminal:
   ```bash
   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"

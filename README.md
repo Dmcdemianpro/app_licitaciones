@@ -134,14 +134,17 @@ cp .env.example .env
 Edita `.env` con tus valores:
 
 ```env
-DATABASE_URL="sqlserver://HOST:1433;database=DB_licitaciones;user=USER;password=PASSWORD;encrypt=true;trustServerCertificate=true"
-NEXTAUTH_SECRET="tu-clave-secreta-minimo-32-caracteres"
+DATABASE_URL="sqlserver://YOUR_SERVER:1433;database=YOUR_DATABASE_NAME;user=YOUR_USER;password=YOUR_PASSWORD;encrypt=true;trustServerCertificate=true"
+NEXTAUTH_SECRET="your-secret-key-min-32-characters-here"
 NEXTAUTH_URL="http://localhost:3001"
 AUTH_TRUST_HOST="true"
 NODE_ENV="development"
 ```
 
-**Nota:** El sistema valida automáticamente estas variables al inicio. Si falta alguna, recibirás un error claro.
+**Nota:**
+- Reemplaza `YOUR_SERVER`, `YOUR_DATABASE_NAME`, `YOUR_USER`, `YOUR_PASSWORD` con tus credenciales reales
+- El sistema valida automáticamente estas variables al inicio. Si falta alguna, recibirás un error claro.
+- Para generar `NEXTAUTH_SECRET` ejecuta: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
 
 ### 4. Ejecutar migraciones de base de datos
 
@@ -187,11 +190,16 @@ Todas las variables son validadas automáticamente por [lib/env.ts](lib/env.ts):
 
 | Variable | Descripción | Requerida | Valor por Defecto |
 |----------|-------------|-----------|-------------------|
-| `DATABASE_URL` | Conexión SQL Server | ✅ | - |
-| `NEXTAUTH_SECRET` | Clave secreta (min 32 chars) | ✅ | - |
+| `DATABASE_URL` | Conexión SQL Server (formato completo requerido) | ✅ | - |
+| `NEXTAUTH_SECRET` | Clave secreta (mínimo 32 caracteres) | ✅ | - |
 | `NEXTAUTH_URL` | URL de la aplicación | ❌ | `http://localhost:3001` |
 | `AUTH_TRUST_HOST` | Confianza en headers de host | ❌ | `true` |
 | `NODE_ENV` | Entorno de ejecución | ❌ | `development` |
+
+**Ejemplo de DATABASE_URL:**
+```
+sqlserver://YOUR_SERVER:1433;database=YOUR_DB;user=YOUR_USER;password=YOUR_PASS;encrypt=true;trustServerCertificate=true
+```
 
 ### Prisma
 
