@@ -15,15 +15,29 @@ model User {
   email          String    @unique @db.NVarChar(255)
   name           String?   @db.NVarChar(255)
   hashedPassword String    @db.NVarChar(255)
-  role           String?   @default("USER") @db.NVarChar(50)
+  role           String?   @default("USER") @db.NVarChar(50) // USER, ADMIN, MANAGER, SUPERVISOR
+  activo         Boolean   @default(true)
+  telefono       String?   @db.NVarChar(50)
+  departamento   String?   @db.NVarChar(100)
+  cargo          String?   @db.NVarChar(100)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  
-  // Relaciones
-  tickets        Ticket[]
+
+  // Relaciones de autenticación
   accounts       Account[]
   sessions       Session[]
-  
+
+  // Relaciones de funcionalidad
+  tickets                Ticket[]
+  licitacionesResponsable Licitacion[] @relation("LicitacionResponsable")
+  licitacionesCreadas    Licitacion[] @relation("LicitacionCreatedBy")
+  citasOrganizadas       Cita[]
+  citasParticipante      CitaParticipante[] @relation("CitaUser")
+  notificaciones         Notificacion[]
+  documentosSubidos      Documento[]
+  notas                  Nota[]
+  auditoriaLogs          AuditoriaLog[]
+
   @@map("users")
 }
 
@@ -75,8 +89,8 @@ model Ticket {
   status      String   @default("ABIERTO") @db.NVarChar(50)
   assignee    String?  @db.NVarChar(255)
   ownerId     String   @map("owner_id") @db.NVarChar(100)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   owner User @relation(fields: [ownerId], references: [id])
 
@@ -84,4 +98,145 @@ model Ticket {
   @@index([ownerId], map: "idx_ticket_owner")
   @@index([status], map: "idx_ticket_status")
   @@index([priority], map: "idx_ticket_priority")
+}
+
+model Licitacion {
+  id                String   @id @default(cuid()) @db.NVarChar(100)
+  codigoExterno     String?  @unique @map("codigo_externo") @db.NVarChar(100)
+  nombre            String   @db.NVarChar(500)
+  descripcion       String?  @db.NVarChar(MAX)
+  entidad           String   @db.NVarChar(255)
+  tipo              String   @default("PUBLICA") @db.NVarChar(50) // PUBLICA, PRIVADA, INTERNACIONAL
+  estado            String   @default("EN_PREPARACION") @db.NVarChar(50) // EN_PREPARACION, ACTIVA, ADJUDICADA, DESIERTA, CANCELADA
+  montoEstimado     Decimal? @db.Decimal(18, 2)
+  moneda            String?  @default("CLP") @db.NVarChar(10)
+  fechaPublicacion  DateTime? @map("fecha_publicacion")
+  fechaCierre       DateTime? @map("fecha_cierre")
+  fechaAdjudicacion DateTime? @map("fecha_adjudicacion")
+  urlExterna        String?  @map("url_externa") @db.NVarChar(500)
+  responsableId     String?  @map("responsable_id") @db.NVarChar(100)
+  createdById       String   @map("created_by_id") @db.NVarChar(100)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  responsable User?       @relation("LicitacionResponsable", fields: [responsableId], references: [id])
+  createdBy   User        @relation("LicitacionCreatedBy", fields: [createdById], references: [id])
+  documentos  Documento[]
+  notas       Nota[]
+
+  @@map("licitaciones")
+  @@index([estado], map: "idx_licitacion_estado")
+  @@index([fechaCierre], map: "idx_licitacion_fecha_cierre")
+  @@index([responsableId], map: "idx_licitacion_responsable")
+}
+
+model Cita {
+  id            String   @id @default(cuid()) @db.NVarChar(100)
+  titulo        String   @db.NVarChar(255)
+  descripcion   String?  @db.NVarChar(MAX)
+  tipo          String   @default("REUNION") @db.NVarChar(50) // REUNION, PRESENTACION, VISITA, ENTREGA, OTRO
+  estado        String   @default("PROGRAMADA") @db.NVarChar(50) // PROGRAMADA, CONFIRMADA, COMPLETADA, CANCELADA
+  fechaInicio   DateTime @map("fecha_inicio")
+  fechaFin      DateTime @map("fecha_fin")
+  ubicacion     String?  @db.NVarChar(255)
+  urlReunion    String?  @map("url_reunion") @db.NVarChar(500)
+  licitacionId  String?  @map("licitacion_id") @db.NVarChar(100)
+  organizadorId String   @map("organizador_id") @db.NVarChar(100)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizador  User         @relation(fields: [organizadorId], references: [id])
+  participantes CitaParticipante[]
+
+  @@map("citas")
+  @@index([fechaInicio], map: "idx_cita_fecha_inicio")
+  @@index([estado], map: "idx_cita_estado")
+  @@index([organizadorId], map: "idx_cita_organizador")
+}
+
+model CitaParticipante {
+  id        String   @id @default(cuid()) @db.NVarChar(100)
+  citaId    String   @map("cita_id") @db.NVarChar(100)
+  userId    String   @map("user_id") @db.NVarChar(100)
+  asistio   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  cita User @relation("CitaUser", fields: [userId], references: [id])
+  user Cita @relation(fields: [citaId], references: [id], onDelete: Cascade)
+
+  @@unique([citaId, userId])
+  @@map("cita_participantes")
+  @@index([citaId], map: "idx_cita_participante_cita")
+  @@index([userId], map: "idx_cita_participante_user")
+}
+
+model Notificacion {
+  id        String   @id @default(cuid()) @db.NVarChar(100)
+  tipo      String   @db.NVarChar(50) // INFO, ADVERTENCIA, ERROR, EXITO
+  titulo    String   @db.NVarChar(255)
+  mensaje   String   @db.NVarChar(MAX)
+  leida     Boolean  @default(false)
+  userId    String   @map("user_id") @db.NVarChar(100)
+  referenceType String? @map("reference_type") @db.NVarChar(50) // TICKET, LICITACION, CITA
+  referenceId   String? @map("reference_id") @db.NVarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+  @@index([userId, leida], map: "idx_notificacion_user_leida")
+  @@index([createdAt], map: "idx_notificacion_fecha")
+}
+
+model Documento {
+  id            String   @id @default(cuid()) @db.NVarChar(100)
+  nombre        String   @db.NVarChar(255)
+  descripcion   String?  @db.NVarChar(500)
+  tipoArchivo   String   @map("tipo_archivo") @db.NVarChar(100)
+  tamano        Int      // Tamaño en bytes
+  rutaArchivo   String   @map("ruta_archivo") @db.NVarChar(500)
+  licitacionId  String   @map("licitacion_id") @db.NVarChar(100)
+  uploadedById  String   @map("uploaded_by_id") @db.NVarChar(100)
+  createdAt     DateTime @default(now())
+
+  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  uploadedBy User       @relation(fields: [uploadedById], references: [id])
+
+  @@map("documentos")
+  @@index([licitacionId], map: "idx_documento_licitacion")
+}
+
+model Nota {
+  id           String   @id @default(cuid()) @db.NVarChar(100)
+  contenido    String   @db.NVarChar(MAX)
+  licitacionId String   @map("licitacion_id") @db.NVarChar(100)
+  autorId      String   @map("autor_id") @db.NVarChar(100)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  autor      User       @relation(fields: [autorId], references: [id])
+
+  @@map("notas")
+  @@index([licitacionId], map: "idx_nota_licitacion")
+}
+
+model AuditoriaLog {
+  id        String   @id @default(cuid()) @db.NVarChar(100)
+  accion    String   @db.NVarChar(100) // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entidad   String   @db.NVarChar(100) // USER, TICKET, LICITACION, etc.
+  entidadId String?  @map("entidad_id") @db.NVarChar(100)
+  cambios   String?  @db.NVarChar(MAX) // JSON con los cambios
+  userId    String?  @map("user_id") @db.NVarChar(100)
+  ipAddress String?  @map("ip_address") @db.NVarChar(45)
+  userAgent String?  @map("user_agent") @db.NVarChar(500)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("auditoria_logs")
+  @@index([userId], map: "idx_auditoria_user")
+  @@index([entidad, entidadId], map: "idx_auditoria_entidad")
+  @@index([createdAt], map: "idx_auditoria_fecha")
 }

@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
 import prisma from "@/lib/prisma";
+import { env } from "@/lib/env";
 import type { Adapter } from "next-auth/adapters";
 
 export const authOptions: NextAuthOptions = {
@@ -48,10 +49,10 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
-  pages: { 
-    signIn: "/login" 
+  pages: {
+    signIn: "/login"
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
