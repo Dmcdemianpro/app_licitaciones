@@ -1,10 +1,13 @@
 // prisma/seed.ts
+// IMPORTANTE: Cargar dotenv ANTES de cualquier import que use variables de entorno
 import { config } from 'dotenv';
-// Cargar variables de entorno desde .env
 config();
 
 import { hash } from "bcrypt";
-import { prisma } from "../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+
+// Crear cliente Prisma directamente sin importar lib/prisma (que importa lib/env)
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Iniciando seed de base de datos...\n');
