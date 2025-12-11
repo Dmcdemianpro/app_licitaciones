@@ -15,6 +15,8 @@ const nextConfig = {
   // Mejoras de seguridad
   poweredByHeader: false,
   reactStrictMode: true,
+  // Fix para NextAuth v5 beta con Next.js 15
+  transpilePackages: ["next-auth"],
 }
 
 export default nextConfig
