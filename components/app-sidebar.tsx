@@ -1,7 +1,8 @@
 "use client"
 
-import { Calendar, FileText, Gavel, Home, Settings, Ticket, Users, Bell, BarChart3 } from "lucide-react"
+import { Calendar, FileText, Gavel, Home, Settings, Ticket, Users, Bell, BarChart3, LogOut } from "lucide-react"
 import Link from "next/link"
+import { signOut } from "next-auth/react"
 
 import {
   Sidebar,
@@ -15,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
 
 const menuItems = [
   {
@@ -116,12 +118,20 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
-        <div className="p-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <SidebarFooter className="border-t border-white/10">
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm text-slate-400">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>Sistema Activo</span>
           </div>
+          <Button
+            variant="destructive"
+            className="w-full justify-start gap-2"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar Sesión
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
