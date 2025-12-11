@@ -15,8 +15,6 @@ const nextConfig = {
   // Mejoras de seguridad
   poweredByHeader: false,
   reactStrictMode: true,
-  // Optimizaciones
-  swcMinify: true,
 }
 
 export default nextConfig

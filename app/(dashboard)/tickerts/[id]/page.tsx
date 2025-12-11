@@ -1,16 +1,17 @@
 "use client";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
-import { useState, useEffect } from "react";
+import { default as useSWR } from "swr";
+import { useState, useEffect, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function TicketEdit({ params }: { params: { id: string } }) {
+export default function TicketEdit({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { data, isLoading } = useSWR(`/api/tickets/${params.id}`, fetcher);
+  const resolvedParams = use(params);
+  const { data, isLoading } = useSWR(`/api/tickets/${resolvedParams.id}`, fetcher);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function TicketEdit({ params }: { params: { id: string } }) {
   if (isLoading) return <p>Cargando…</p>;
 
   const handleSave = async () => {
-    await fetch(`/api/tickets/${params.id}`, {
+    await fetch(`/api/tickets/${resolvedParams.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description }),
@@ -30,7 +31,7 @@ export default function TicketEdit({ params }: { params: { id: string } }) {
     router.push("/tickets");
   };
   const handleDelete = async () => {
-    await fetch(`/api/tickets/${params.id}`, { method: "DELETE" });
+    await fetch(`/api/tickets/${resolvedParams.id}`, { method: "DELETE" });
     router.push("/tickets");
   };
 
