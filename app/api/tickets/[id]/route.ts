@@ -6,11 +6,12 @@ import { ticketUpdateSchema } from "@/lib/validations/tickets";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const ticket = await prisma.ticket.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         owner: { select: { id: true, name: true, email: true } },
       },
@@ -30,7 +31,7 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -38,6 +39,7 @@ export async function PATCH(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await req.json();
     const parsed = ticketUpdateSchema.safeParse(body);
 
@@ -49,7 +51,7 @@ export async function PATCH(
     }
 
     const ticket = await prisma.ticket.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...parsed.data,
         assignee:
@@ -71,7 +73,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -79,7 +81,8 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    await prisma.ticket.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.ticket.delete({ where: { id } });
     return NextResponse.json(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting ticket:", error);
