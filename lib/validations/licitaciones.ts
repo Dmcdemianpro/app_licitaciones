@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { LICITACION_ESTADO, LICITACION_TIPO, MONEDAS } from '@/lib/constants'
 
-// Schema para crear licitación
-export const licitacionCreateSchema = z.object({
+// Schema base sin validaciones complejas
+const licitacionBaseSchema = z.object({
   codigoExterno: z.string().max(100).optional(),
   nombre: z.string().min(5, 'El nombre debe tener al menos 5 caracteres').max(500),
   descripcion: z.string().max(5000).optional(),
@@ -22,7 +22,10 @@ export const licitacionCreateSchema = z.object({
   fechaAdjudicacion: z.coerce.date().optional(),
   urlExterna: z.string().url().max(500).optional().or(z.literal('')),
   responsableId: z.string().optional(),
-}).refine((data) => {
+})
+
+// Schema para crear licitación (con validación de fechas)
+export const licitacionCreateSchema = licitacionBaseSchema.refine((data) => {
   // Validar que fechaCierre sea posterior a fechaPublicacion
   if (data.fechaPublicacion && data.fechaCierre) {
     return data.fechaCierre > data.fechaPublicacion
@@ -33,8 +36,8 @@ export const licitacionCreateSchema = z.object({
   path: ['fechaCierre'],
 })
 
-// Schema para actualizar licitación
-export const licitacionUpdateSchema = licitacionCreateSchema.partial()
+// Schema para actualizar licitación (sin validación de fechas requerida)
+export const licitacionUpdateSchema = licitacionBaseSchema.partial()
 
 // Schema para búsqueda/filtros
 export const licitacionFilterSchema = z.object({
