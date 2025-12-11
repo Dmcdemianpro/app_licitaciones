@@ -20,6 +20,14 @@ const priorityLabels: Record<string, string> = {
   BAJA: "Baja",
 };
 
+type RecentTicket = {
+  id: string
+  title: string
+  priority: string
+  status: string
+  updatedAt: Date
+}
+
 export default async function Dashboard() {
   const [totalTickets, openTickets, inProgress, finishedTickets, recentTickets] = await Promise.all([
     prisma.ticket.count(),
@@ -37,7 +45,7 @@ export default async function Dashboard() {
         updatedAt: true,
       },
     }),
-  ]);
+  ]) as [number, number, number, number, RecentTicket[]];
 
   const stats = [
     {

@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { Prisma } from '@prisma/client'
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library'
 
 // Tipos de errores personalizados
 export class AppError extends Error {
@@ -88,7 +89,7 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
   }
 
   // Errores de Prisma
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (error instanceof PrismaClientKnownRequestError) {
     // Registro duplicado (unique constraint)
     if (error.code === 'P2002') {
       const field = (error.meta?.target as string[])?.join(', ') || 'campo'
@@ -131,7 +132,7 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
   }
 
   // Errores de Prisma - validación
-  if (error instanceof Prisma.PrismaClientValidationError) {
+  if (error instanceof PrismaClientValidationError) {
     return NextResponse.json(
       {
         error: {
