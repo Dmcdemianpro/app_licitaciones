@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import prisma from "@/lib/prisma";
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   ABIERTO: "Abierto",
   EN_PROGRESO: "En progreso",
   RESUELTO: "Resuelto",
   CERRADO: "Cerrado",
 };
 
-const priorityLabels = {
+const priorityLabels: Record<string, string> = {
   ALTA: "Alta",
   MEDIA: "Media",
   BAJA: "Baja",
