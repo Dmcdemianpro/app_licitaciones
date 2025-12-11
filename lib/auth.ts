@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
@@ -6,7 +6,8 @@ import prisma from "@/lib/prisma";
 import { env } from "@/lib/env";
 import type { Adapter } from "next-auth/adapters";
 
-export const authOptions: NextAuthOptions = {
+// NextAuth v5: Se pasa la configuración directamente sin NextAuthOptions
+export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   providers: [
@@ -21,21 +22,21 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials.password) {
           return null;
         }
-        
+
         try {
-          const user = await prisma.user.findUnique({ 
-            where: { email: credentials.email } 
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
           });
-          
+
           if (!user || !user.hashedPassword) {
             return null;
           }
-          
+
           const valid = await compare(credentials.password, user.hashedPassword);
           if (!valid) {
             return null;
           }
-          
+
           return {
             id: user.id,
             email: user.email,
@@ -69,11 +70,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   }
-};
+});
 
-// Crear la instancia de NextAuth (v5) y exponer helpers
-const authHandler = NextAuth(authOptions);
-
-export const auth = authHandler.auth;
-export const { GET, POST } = authHandler.handlers;
-export default authHandler;
+// Exportar handlers para uso en API routes
+export const { GET, POST } = handlers;
