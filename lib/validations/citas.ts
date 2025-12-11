@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { CITA_ESTADO, CITA_TIPO } from '@/lib/constants'
 
-// Schema para crear cita
-export const citaCreateSchema = z.object({
+// Schema base sin validaciones complejas
+const citaBaseSchema = z.object({
   titulo: z.string().min(3, 'El título debe tener al menos 3 caracteres').max(255),
   descripcion: z.string().max(5000).optional(),
   tipo: z.enum([
@@ -24,7 +24,10 @@ export const citaCreateSchema = z.object({
   urlReunion: z.string().url().max(500).optional().or(z.literal('')),
   licitacionId: z.string().optional(),
   participantes: z.array(z.string()).optional(),
-}).refine((data) => {
+})
+
+// Schema para crear cita (con validación de fechas)
+export const citaCreateSchema = citaBaseSchema.refine((data) => {
   // Validar que fechaFin sea posterior a fechaInicio
   return data.fechaFin > data.fechaInicio
 }, {
@@ -32,8 +35,8 @@ export const citaCreateSchema = z.object({
   path: ['fechaFin'],
 })
 
-// Schema para actualizar cita
-export const citaUpdateSchema = citaCreateSchema.partial()
+// Schema para actualizar cita (sin validación de fechas requerida)
+export const citaUpdateSchema = citaBaseSchema.partial()
 
 // Schema para filtros
 export const citaFilterSchema = z.object({
