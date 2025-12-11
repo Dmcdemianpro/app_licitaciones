@@ -1,8 +1,9 @@
-import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcrypt";
 import prisma from "@/lib/prisma";
 
+// Configuración de NextAuth v5
+// Nota: No usar "satisfies NextAuthConfig" porque el tipo no está disponible en beta.28
 export default {
   providers: [
     CredentialsProvider({
@@ -63,4 +64,4 @@ export default {
       return session;
     }
   }
-} satisfies NextAuthConfig;
+};
