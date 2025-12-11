@@ -2,8 +2,7 @@
  * Helpers para manejo de sesión y autenticación
  */
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from './auth'
+import { auth } from './auth'
 import { AuthenticationError, AuthorizationError } from './errors'
 import { hasPermission, Action, canAccessResource } from './permissions'
 import type { UserRole } from './constants'
@@ -17,9 +16,10 @@ export interface SessionUser {
 
 /**
  * Obtiene la sesión del usuario actual
+ * En NextAuth v5, se usa directamente auth() en lugar de getServerSession
  */
 export async function getCurrentSession() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   return session
 }
 
