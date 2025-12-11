@@ -19,7 +19,7 @@ export default function CitasPage() {
             <p className="text-sm text-slate-200">Programa y registra tus reuniones.</p>
           </div>
         </div>
-        <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400" asChild>
+        <Button variant="primary" asChild>
           <Link href="/citas/nueva">
             <Plus className="mr-2 h-4 w-4" />
             Nueva Cita
@@ -40,7 +40,7 @@ export default function CitasPage() {
             <p className="text-sm text-slate-200">
               Cuando registres citas aparecerán aquí agrupadas por fecha y tipo.
             </p>
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400" asChild>
+            <Button variant="primary" asChild>
               <Link href="/citas/nueva">
                 <Plus className="mr-2 h-4 w-4" />
                 Crear cita

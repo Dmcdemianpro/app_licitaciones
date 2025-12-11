@@ -157,13 +157,13 @@ export default function ConfiguracionPage() {
                 <div className="flex gap-2">
                   <Button
                     onClick={handleSave}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                    variant="primary"
                   >
                     Guardar cambios
                   </Button>
                   <Button
                     onClick={handleReset}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                    variant="primary"
                   >
                     Restablecer
                   </Button>

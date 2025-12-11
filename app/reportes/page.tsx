@@ -87,7 +87,8 @@ export default function ReportesPage() {
               </div>
               <Button
                 onClick={generarReporte}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
+                className="w-full"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Generar reporte

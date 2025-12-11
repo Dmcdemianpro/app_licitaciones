@@ -87,7 +87,7 @@ export default async function Dashboard() {
           <Button
             asChild
             size="sm"
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+            variant="primary"
           >
             <Link href="/tickets">
               <TicketIcon className="mr-2 h-4 w-4" />
@@ -97,7 +97,7 @@ export default async function Dashboard() {
           <Button
             asChild
             size="sm"
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+            variant="primary"
           >
             <Link href="/tickets/nuevo">
               <Plus className="mr-2 h-4 w-4" />
@@ -164,7 +164,7 @@ export default async function Dashboard() {
               <Button
                 asChild
                 size="sm"
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
               >
                 <Link href="/tickets">Ir al listado completo</Link>
               </Button>
@@ -202,7 +202,8 @@ export default async function Dashboard() {
             <CardFooter>
               <Button
                 asChild
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
+                className="w-full"
               >
                 <Link href="/licitaciones">Ver licitaciones</Link>
               </Button>
@@ -217,7 +218,7 @@ export default async function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Button asChild variant="secondary" className="justify-start gap-2 bg-indigo-500 text-white hover:bg-indigo-400">
+              <Button asChild variant="primary" className="justify-start gap-2">
                 <Link href="/tickets/nuevo">
                   <Plus className="h-4 w-4" />
                   Crear ticket
@@ -225,19 +226,22 @@ export default async function Dashboard() {
               </Button>
               <Button
                 asChild
-                className="justify-start bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
+                className="justify-start"
               >
                 <Link href="/licitaciones/nueva">Registrar licitación</Link>
               </Button>
               <Button
                 asChild
-                className="justify-start bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
+                className="justify-start"
               >
                 <Link href="/citas/nueva">Agendar cita</Link>
               </Button>
               <Button
                 asChild
-                className="justify-start bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                variant="primary"
+                className="justify-start"
               >
                 <Link href="/reportes">Generar reporte</Link>
               </Button>

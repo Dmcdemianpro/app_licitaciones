@@ -169,7 +169,7 @@ export default function LicitacionesPage() {
                 <Button
                   type="button"
                   onClick={() => setSearchTerm(searchInput)}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400"
+                  variant="primary"
                 >
                   Buscar
                 </Button>
@@ -192,7 +192,7 @@ export default function LicitacionesPage() {
                   <p className="text-sm text-slate-200">
                     Aún no hay licitaciones registradas o coincidentes. Agrega una nueva para comenzar.
                   </p>
-                  <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg hover:from-indigo-400 hover:to-purple-400">
+                  <Button variant="primary" asChild>
                     <Link href="/licitaciones/nueva">
                       <Plus className="mr-2 h-4 w-4" />
                       Crear licitación
