@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env PORT=3001 next dev",
+    "dev": "node -r dotenv/config node_modules/.bin/next dev --port 3001",
     "build": "next build",
-    "start": "cross-env PORT=3001 next start",
+    "start": "node -r dotenv/config node_modules/.bin/next start --port 3001",
+    "start:prod": "NODE_ENV=production node -r dotenv/config node_modules/.bin/next start --port 3001",
     "lint": "next lint",
     "seed": "tsx prisma/seed.ts"
   },

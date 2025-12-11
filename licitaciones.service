@@ -1,0 +1,37 @@
+[Unit]
+Description=Sistema de Licitaciones - Next.js Application
+Documentation=https://github.com/Dmcdemianpro/app_licitaciones
+After=network.target mssql-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/Proyecto/app_licitaciones
+Environment=NODE_ENV=production
+Environment=PORT=3001
+
+# Cargar variables de entorno desde .env
+EnvironmentFile=/Proyecto/app_licitaciones/.env
+
+# Comando para iniciar la aplicación
+ExecStart=/usr/bin/npm run start:prod
+
+# Reiniciar automáticamente si falla
+Restart=always
+RestartSec=10
+
+# Timeouts
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+# Límites de recursos (ajustar según necesidad)
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=licitaciones
+
+[Install]
+WantedBy=multi-user.target

@@ -225,6 +225,22 @@ npx prisma studio
 2. Usa cualquiera de las credenciales del seed
 3. Contraseña: `admin123`
 
+### ⚡ Inicio Automático en Servidor Linux (Systemd)
+
+Para configurar la aplicación para que se inicie automáticamente después de un reinicio o corte de luz:
+
+```bash
+# Instalación rápida
+sudo bash install-service.sh
+```
+
+Ver documentación completa: [SERVICIO_SYSTEMD.md](./SERVICIO_SYSTEMD.md)
+
+**Comandos útiles:**
+- `sudo systemctl status licitaciones` - Ver estado
+- `sudo systemctl restart licitaciones` - Reiniciar
+- `sudo journalctl -u licitaciones -f` - Ver logs en tiempo real
+
 ### Gestionar Tickets
 
 1. Ve a **Tickets** en el menú lateral
