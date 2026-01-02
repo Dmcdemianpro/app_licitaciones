@@ -40,7 +40,7 @@ export default function ReportesPage() {
       </header>
 
       <div className="flex-1 space-y-6 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div className="mx-auto flex w-full flex-col gap-6">
           <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Generar nuevo reporte</CardTitle>
