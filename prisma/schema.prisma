@@ -28,15 +28,16 @@ model User {
   sessions       Session[]
 
   // Relaciones de funcionalidad
-  tickets                Ticket[]
-  licitacionesResponsable Licitacion[] @relation("LicitacionResponsable")
-  licitacionesCreadas    Licitacion[] @relation("LicitacionCreatedBy")
-  citasOrganizadas       Cita[]
-  citasParticipante      CitaParticipante[] @relation("CitaUser")
-  notificaciones         Notificacion[]
-  documentosSubidos      Documento[]
-  notas                  Nota[]
-  auditoriaLogs          AuditoriaLog[]
+  ticketsCreados          Ticket[]       @relation("TicketOwner")
+  ticketsAsignados        Ticket[]       @relation("TicketAssignee")
+  licitacionesResponsable Licitacion[]   @relation("LicitacionResponsable")
+  licitacionesCreadas     Licitacion[]   @relation("LicitacionCreatedBy")
+  citasOrganizadas        Cita[]
+  citasParticipante       CitaParticipante[] @relation("CitaUser")
+  notificaciones          Notificacion[]
+  documentosSubidos       Documento[]
+  notas                   Nota[]
+  auditoriaLogs           AuditoriaLog[]
 
   @@map("users")
 }
@@ -85,19 +86,22 @@ model Ticket {
   title       String   @db.NVarChar(255)
   description String?  @db.NVarChar(MAX)
   type        String   @db.NVarChar(100)
-  priority    String   @default("MEDIA") @db.NVarChar(50)
-  status      String   @default("ABIERTO") @db.NVarChar(50)
+  priority    String   @default("MEDIA") @db.NVarChar(50) // ALTA, MEDIA, BAJA
+  status      String   @default("CREADO") @db.NVarChar(50) // CREADO, ASIGNADO, INICIADO, FINALIZADO
   assignee    String?  @db.NVarChar(255)
+  assigneeId  String?  @map("assignee_id") @db.NVarChar(100)
   ownerId     String   @map("owner_id") @db.NVarChar(100)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner      User         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  documentos Documento[]
-  notas      Nota[]
+  owner        User          @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assignedTo   User?         @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  documentos   Documento[]
+  notas        Nota[]
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
+  @@index([assigneeId], map: "idx_ticket_assignee")
   @@index([status], map: "idx_ticket_status")
   @@index([priority], map: "idx_ticket_priority")
 }

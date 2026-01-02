@@ -19,7 +19,7 @@ type Ticket = {
   description?: string | null;
   type: string;
   priority: "ALTA" | "MEDIA" | "BAJA";
-  status: "ABIERTO" | "EN_PROGRESO" | "RESUELTO" | "CERRADO";
+  status: "CREADO" | "ASIGNADO" | "INICIADO" | "FINALIZADO";
   assignee?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -32,10 +32,10 @@ const fetcher = async (url: string) => {
 };
 
 const statusLabels: Record<Ticket["status"], string> = {
-  ABIERTO: "Abierto",
-  EN_PROGRESO: "En progreso",
-  RESUELTO: "Resuelto",
-  CERRADO: "Cerrado",
+  CREADO: "Creado",
+  ASIGNADO: "Asignado",
+  INICIADO: "Iniciado",
+  FINALIZADO: "Finalizado",
 };
 
 const priorityLabels: Record<Ticket["priority"], string> = {
@@ -78,13 +78,13 @@ export default function TicketsPage() {
 
   const getStatusColor = (status: Ticket["status"]) => {
     switch (status) {
-      case "ABIERTO":
+      case "CREADO":
         return "destructive";
-      case "EN_PROGRESO":
+      case "ASIGNADO":
         return "default";
-      case "RESUELTO":
+      case "INICIADO":
         return "secondary";
-      case "CERRADO":
+      case "FINALIZADO":
       default:
         return "outline";
     }
@@ -109,7 +109,7 @@ export default function TicketsPage() {
             variant="outline"
             size="sm"
             onClick={() => mutate()}
-            className="border-white/30 text-slate-100 hover:bg-white/10 disabled:border-white/20 disabled:text-slate-300"
+            className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 disabled:border-white/20 disabled:text-slate-300"
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Refrescar
@@ -155,10 +155,10 @@ export default function TicketsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los estados</SelectItem>
-                    <SelectItem value="ABIERTO">Abierto</SelectItem>
-                    <SelectItem value="EN_PROGRESO">En progreso</SelectItem>
-                    <SelectItem value="RESUELTO">Resuelto</SelectItem>
-                    <SelectItem value="CERRADO">Cerrado</SelectItem>
+                    <SelectItem value="CREADO">Creado</SelectItem>
+                    <SelectItem value="ASIGNADO">Asignado</SelectItem>
+                    <SelectItem value="INICIADO">Iniciado</SelectItem>
+                    <SelectItem value="FINALIZADO">Finalizado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
