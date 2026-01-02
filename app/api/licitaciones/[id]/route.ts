@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -12,8 +12,10 @@ export async function GET(
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const licitacion = await prisma.licitacion.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         responsable: {
           select: {
@@ -93,7 +95,7 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -101,11 +103,12 @@ export async function PATCH(
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await req.json();
     const { responsableId, estado, descripcion } = body;
 
     const licitacion = await prisma.licitacion.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(responsableId !== undefined && { responsableId }),
         ...(estado && { estado }),
