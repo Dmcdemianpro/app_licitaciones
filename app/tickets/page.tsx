@@ -223,7 +223,7 @@ export default function TicketsPage() {
                     </TableHeader>
                     <TableBody>
                       {filteredTickets.map((ticket) => (
-                        <TableRow key={ticket.id} className="hover:bg-white/5">
+                        <TableRow key={ticket.id} className="hover:bg-white/5 cursor-pointer" onClick={() => window.location.href = `/tickets/${ticket.id}`}>
                           <TableCell className="font-mono text-xs text-slate-200">{ticket.id}</TableCell>
                           <TableCell className="font-medium">{ticket.title}</TableCell>
                           <TableCell className="text-slate-200">{ticket.type}</TableCell>

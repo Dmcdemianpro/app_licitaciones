@@ -14,17 +14,10 @@ export async function GET(
 
     const { id } = await params;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id },
+    const notas = await prisma.nota.findMany({
+      where: { ticketId: id },
       include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        assignedTo: {
+        autor: {
           select: {
             id: true,
             name: true,
@@ -32,26 +25,22 @@ export async function GET(
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    if (!ticket) {
-      return NextResponse.json(
-        { error: "Ticket no encontrado" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ ticket });
+    return NextResponse.json({ notas });
   } catch (error) {
-    console.error("Error obteniendo ticket:", error);
+    console.error("Error obteniendo notas:", error);
     return NextResponse.json(
-      { error: "Error al obtener ticket" },
+      { error: "Error al obtener notas" },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(
+export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -64,18 +53,21 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
-    const ticket = await prisma.ticket.update({
-      where: { id },
-      data: body,
+    if (!body.contenido || body.contenido.trim() === "") {
+      return NextResponse.json(
+        { error: "El contenido de la nota es requerido" },
+        { status: 400 }
+      );
+    }
+
+    const nota = await prisma.nota.create({
+      data: {
+        contenido: body.contenido,
+        ticketId: id,
+        autorId: session.user.id,
+      },
       include: {
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        assignedTo: {
+        autor: {
           select: {
             id: true,
             name: true,
@@ -85,11 +77,11 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ ticket });
+    return NextResponse.json({ nota });
   } catch (error) {
-    console.error("Error actualizando ticket:", error);
+    console.error("Error creando nota:", error);
     return NextResponse.json(
-      { error: "Error al actualizar ticket" },
+      { error: "Error al crear nota" },
       { status: 500 }
     );
   }
