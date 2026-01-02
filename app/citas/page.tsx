@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Calendar, Clock, MapPin, Plus, User, Users, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, User, Users, Video, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -50,13 +50,55 @@ const getEstadoColor = (estado: string) => {
 export default function CitasPage() {
   const [estadoFilter, setEstadoFilter] = useState("all");
 
-  const { data, error, isLoading } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR(
     `/api/citas${estadoFilter !== "all" ? `?estado=${estadoFilter}` : ""}`,
     fetcher,
     { refreshInterval: 20000 }
   );
 
   const citas = (data?.citas as any[]) ?? [];
+
+  const handleFinalizar = async (citaId: string) => {
+    if (!confirm("¿Estás seguro de que deseas marcar esta cita como completada?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/citas/${citaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "COMPLETADA" }),
+      });
+
+      if (res.ok) {
+        mutate();
+      } else {
+        alert("No se pudo finalizar la cita");
+      }
+    } catch (err) {
+      alert("Error al finalizar la cita");
+    }
+  };
+
+  const handleEliminar = async (citaId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta cita? Esta acción no se puede deshacer.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/citas/${citaId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        mutate();
+      } else {
+        alert("No se pudo eliminar la cita");
+      }
+    } catch (err) {
+      alert("Error al eliminar la cita");
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -223,6 +265,50 @@ export default function CitasPage() {
                                 <Badge variant="outline" className="border-white/20 text-slate-300">
                                   {tipoLabels[cita.tipo] || cita.tipo}
                                 </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                  className="border-white/20 text-white hover:bg-white/10"
+                                >
+                                  <Link href={`/citas/${cita.id}`}>
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    Ver
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                  className="border-white/20 text-white hover:bg-white/10"
+                                >
+                                  <Link href={`/citas/${cita.id}/editar`}>
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Editar
+                                  </Link>
+                                </Button>
+                                {cita.estado !== "COMPLETADA" && cita.estado !== "CANCELADA" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleFinalizar(cita.id)}
+                                    className="border-green-500/30 text-green-300 hover:bg-green-500/10"
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Finalizar
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEliminar(cita.id)}
+                                  className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Eliminar
+                                </Button>
                               </div>
                             </div>
 
