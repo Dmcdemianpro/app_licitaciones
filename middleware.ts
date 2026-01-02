@@ -1,12 +1,9 @@
 // middleware.ts
-import { getToken } from "next-auth/jwt";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  // Ajusta la lógica según tu app
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  const isAuth = !!token;
+export default auth((req) => {
+  const isAuth = !!req.auth;
   const isLoginPage = req.nextUrl.pathname.startsWith("/login");
 
   if (!isAuth && !isLoginPage) {
@@ -16,7 +13,7 @@ export async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 // Opcional: define rutas protegidas
 export const config = {
