@@ -92,7 +92,9 @@ model Ticket {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner      User         @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  documentos Documento[]
+  notas      Nota[]
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
@@ -145,8 +147,10 @@ model Cita {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizador  User         @relation(fields: [organizadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organizador   User                 @relation(fields: [organizadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   participantes CitaParticipante[]
+  documentos    Documento[]
+  notas         Nota[]
 
   @@map("citas")
   @@index([fechaInicio], map: "idx_cita_fecha_inicio")
@@ -196,30 +200,42 @@ model Documento {
   tipoArchivo   String   @map("tipo_archivo") @db.NVarChar(100)
   tamano        Int      // Tamaño en bytes
   rutaArchivo   String   @map("ruta_archivo") @db.NVarChar(500)
-  licitacionId  String   @map("licitacion_id") @db.NVarChar(100)
+  licitacionId  String?  @map("licitacion_id") @db.NVarChar(100)
+  citaId        String?  @map("cita_id") @db.NVarChar(100)
+  ticketId      String?  @map("ticket_id") @db.NVarChar(100)
   uploadedById  String   @map("uploaded_by_id") @db.NVarChar(100)
   createdAt     DateTime @default(now())
 
-  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
-  uploadedBy User       @relation(fields: [uploadedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  licitacion Licitacion? @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  cita       Cita?       @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  ticket     Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedBy User        @relation(fields: [uploadedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("documentos")
   @@index([licitacionId], map: "idx_documento_licitacion")
+  @@index([citaId], map: "idx_documento_cita")
+  @@index([ticketId], map: "idx_documento_ticket")
 }
 
 model Nota {
   id           String   @id @default(cuid()) @db.NVarChar(100)
   contenido    String   @db.NVarChar(MAX)
-  licitacionId String   @map("licitacion_id") @db.NVarChar(100)
+  licitacionId String?  @map("licitacion_id") @db.NVarChar(100)
+  citaId       String?  @map("cita_id") @db.NVarChar(100)
+  ticketId     String?  @map("ticket_id") @db.NVarChar(100)
   autorId      String   @map("autor_id") @db.NVarChar(100)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
-  autor      User       @relation(fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  licitacion Licitacion? @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  cita       Cita?       @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  ticket     Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  autor      User        @relation(fields: [autorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("notas")
   @@index([licitacionId], map: "idx_nota_licitacion")
+  @@index([citaId], map: "idx_nota_cita")
+  @@index([ticketId], map: "idx_nota_ticket")
 }
 
 model AuditoriaLog {

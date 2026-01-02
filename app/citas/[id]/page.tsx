@@ -15,12 +15,20 @@ import {
   Trash2,
   CheckCircle,
   Loader2,
+  FileText,
+  Upload,
+  Download,
+  Send,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import useSWR from "swr";
 
 const estadoLabels: Record<string, string> = {
   PROGRAMADA: "Programada",
@@ -77,11 +85,32 @@ type Cita = {
   }>;
 };
 
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("No se pudo cargar los datos");
+  return res.json();
+};
+
 export default function CitaDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [cita, setCita] = useState<Cita | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Notes
+  const [notaContenido, setNotaContenido] = useState("");
+  const [submittingNota, setSubmittingNota] = useState(false);
+  const { data: notasData, mutate: mutateNotas } = useSWR(
+    `/api/citas/${params.id}/notas`,
+    fetcher
+  );
+
+  // Documents
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const { data: docsData, mutate: mutateDocs } = useSWR(
+    `/api/citas/${params.id}/documentos`,
+    fetcher
+  );
 
   useEffect(() => {
     const fetchCita = async () => {
@@ -370,19 +399,181 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
             </Card>
           </div>
 
-          {/* Placeholder para Notas y Documentos - se implementará en la siguiente tarea */}
+          {/* Notas */}
           <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-lg">Notas y Documentos</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FileText className="h-5 w-5 text-indigo-400" />
+                Notas
+              </CardTitle>
               <CardDescription className="text-slate-300">
-                Sección para agregar notas y documentos relacionados con la cita
+                Agrega notas y minutas de la reunión
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
-                <p className="text-sm text-slate-300">
-                  Funcionalidad de notas y documentos próximamente
-                </p>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Textarea
+                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  placeholder="Escribe una nota o minuta..."
+                  rows={3}
+                  value={notaContenido}
+                  onChange={(e) => setNotaContenido(e.target.value)}
+                />
+                <Button
+                  onClick={async () => {
+                    if (!notaContenido.trim()) return;
+                    setSubmittingNota(true);
+                    try {
+                      await fetch(`/api/citas/${params.id}/notas`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contenido: notaContenido }),
+                      });
+                      setNotaContenido("");
+                      mutateNotas();
+                    } catch (err) {
+                      alert("Error al guardar la nota");
+                    } finally {
+                      setSubmittingNota(false);
+                    }
+                  }}
+                  disabled={submittingNota || !notaContenido.trim()}
+                  className="bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {submittingNota ? "Guardando..." : "Agregar nota"}
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {notasData?.notas?.length > 0 ? (
+                  notasData.notas.map((nota: any) => (
+                    <div
+                      key={nota.id}
+                      className="rounded-lg border border-white/15 bg-white/5 p-4"
+                    >
+                      <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                        {nota.contenido}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                        <User className="h-3 w-3" />
+                        <span>{nota.autor?.name || "Desconocido"}</span>
+                        <span>•</span>
+                        <span>
+                          {new Date(nota.createdAt).toLocaleDateString("es-CL", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+                    <FileText className="h-8 w-8 text-slate-500" />
+                    <p className="text-sm text-slate-400">
+                      No hay notas aún. Agrega la primera nota arriba.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Documentos */}
+          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-5 w-5 text-indigo-400" />
+                Documentos
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                Sube documentos relacionados con la cita (minutas, presentaciones, etc.)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-slate-200">Subir documento</Label>
+                <Input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+                  className="border-white/20 bg-white/10 text-white file:mr-4 file:rounded file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:text-white hover:file:bg-indigo-700"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setUploadingDoc(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append("file", file);
+
+                      await fetch(`/api/citas/${params.id}/documentos`, {
+                        method: "POST",
+                        body: formData,
+                      });
+
+                      mutateDocs();
+                      e.target.value = "";
+                    } catch (err) {
+                      alert("Error al subir el documento");
+                    } finally {
+                      setUploadingDoc(false);
+                    }
+                  }}
+                  disabled={uploadingDoc}
+                />
+                {uploadingDoc && (
+                  <p className="text-sm text-slate-400">Subiendo documento...</p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {docsData?.documentos?.length > 0 ? (
+                  docsData.documentos.map((doc: any) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-indigo-500/20 p-2">
+                          <FileText className="h-5 w-5 text-indigo-300" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{doc.nombre}</p>
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>{(doc.tamano / 1024).toFixed(2)} KB</span>
+                            <span>•</span>
+                            <span>{doc.uploadedBy?.name || "Desconocido"}</span>
+                            <span>•</span>
+                            <span>
+                              {new Date(doc.createdAt).toLocaleDateString("es-CL")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="border-white/20 text-white hover:bg-white/10"
+                      >
+                        <a href={doc.rutaArchivo} download target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+                    <Upload className="h-8 w-8 text-slate-500" />
+                    <p className="text-sm text-slate-400">
+                      No hay documentos aún. Sube el primer documento arriba.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
