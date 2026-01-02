@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { AlertTriangle, Calendar, Plus, Search } from "lucide-react";
+import { AlertTriangle, Calendar, Download, Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export default function LicitacionesPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [importando, setImportando] = useState<string | null>(null);
 
   const estadoParamMap: Record<string, string> = {
     all: "todos",
@@ -71,6 +73,35 @@ export default function LicitacionesPage() {
     if (days <= 3) return "text-red-300";
     if (days <= 7) return "text-orange-300";
     return "text-emerald-300";
+  };
+
+  const handleImportar = async (licitacion: any) => {
+    setImportando(licitacion.id);
+    try {
+      const res = await fetch("/api/licitaciones/importar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawData: licitacion.rawData }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          toast.error("Esta licitación ya fue importada previamente");
+        } else {
+          toast.error(data.error || "Error al importar licitación");
+        }
+        return;
+      }
+
+      toast.success("Licitación importada correctamente");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al importar licitación");
+    } finally {
+      setImportando(null);
+    }
   };
 
   const totalActivas = licitaciones.filter((l) => l.estado?.toLowerCase().includes("activa")).length;
@@ -213,6 +244,7 @@ export default function LicitacionesPage() {
                         <TableHead className="text-white">Monto</TableHead>
                         <TableHead className="text-white">Estado</TableHead>
                         <TableHead className="text-white">Restante</TableHead>
+                        <TableHead className="text-white">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -229,6 +261,24 @@ export default function LicitacionesPage() {
                           </TableCell>
                           <TableCell className={getDaysColor(licitacion.diasRestantes ?? 0)}>
                             {licitacion.diasRestantes ?? "-"} días
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleImportar(licitacion)}
+                              disabled={importando === licitacion.id}
+                              className="border-indigo-400/50 bg-indigo-500/10 text-indigo-200 hover:bg-indigo-500/20"
+                            >
+                              {importando === licitacion.id ? (
+                                <>Guardando...</>
+                              ) : (
+                                <>
+                                  <Download className="mr-1 h-3 w-3" />
+                                  Guardar
+                                </>
+                              )}
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}

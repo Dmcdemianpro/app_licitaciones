@@ -42,17 +42,40 @@ export async function GET(req: Request) {
     const data = await res.json();
 
     const listado = Array.isArray(data?.Listado) ? data.Listado : [];
-    const items = listado.map((item: any) => ({
-      id: item.Codigo || item.CodigoExterno || crypto.randomUUID(),
-      codigo: item.Codigo || item.CodigoExterno || "N/A",
-      nombre: item.Nombre || item.NombreLicitacion || "Sin nombre",
-      institucion: item.NombreOrganismo || item.NombreInstitucion || "N/D",
-      fechaPublicacion: item.FechaPublicacion || item.Fecha || "-",
-      fechaCierre: item.FechaCierre || "-",
-      montoEstimado: item.MontoEstimado || item.Monto || "-",
-      estado: item.Estado || item.CodigoEstadoDescripcion || item.CodigoEstado || "Desconocido",
-      diasRestantes: undefined,
-    }));
+    const items = listado.map((item: any) => {
+      // Calcular monto desde los items adjudicados si no está en el nivel superior
+      const montoEstimado = item.MontoEstimado ||
+        item.Items?.Listado?.[0]?.Adjudicacion?.MontoUnitario ||
+        null;
+
+      // Formatear fechas
+      const fechaPublicacion = item.Fechas?.FechaPublicacion || item.FechaPublicacion || "-";
+      const fechaCierre = item.Fechas?.FechaCierre || item.FechaCierre || "-";
+
+      // Calcular días restantes si hay fecha de cierre
+      let diasRestantes = undefined;
+      if (fechaCierre && fechaCierre !== "-") {
+        const cierre = new Date(fechaCierre);
+        const hoy = new Date();
+        const diff = cierre.getTime() - hoy.getTime();
+        diasRestantes = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      }
+
+      return {
+        id: item.Codigo || item.CodigoExterno || crypto.randomUUID(),
+        codigo: item.Codigo || item.CodigoExterno || "N/A",
+        nombre: item.Nombre || "Sin nombre",
+        descripcion: item.Descripcion || "",
+        institucion: item.Comprador?.NombreOrganismo || item.NombreOrganismo || "N/D",
+        fechaPublicacion: fechaPublicacion !== "-" ? new Date(fechaPublicacion).toLocaleDateString('es-CL') : "-",
+        fechaCierre: fechaCierre !== "-" ? new Date(fechaCierre).toLocaleDateString('es-CL') : "-",
+        montoEstimado: montoEstimado ? `$${(montoEstimado / 1000000).toFixed(1)}M` : "-",
+        estado: item.Estado || "Desconocido",
+        diasRestantes,
+        // Datos adicionales para guardar en BD
+        rawData: item, // Guardamos el objeto completo por si se quiere guardar
+      };
+    });
 
     return NextResponse.json({ items });
   } catch (error) {

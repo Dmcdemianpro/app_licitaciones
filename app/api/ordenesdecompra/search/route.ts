@@ -42,20 +42,27 @@ export async function GET(req: Request) {
     const data = await res.json();
 
     const listado = Array.isArray(data?.Listado) ? data.Listado : [];
-    const items = listado.map((item: any) => ({
-      id: item.Codigo || crypto.randomUUID(),
-      codigo: item.Codigo || "N/A",
-      nombre: item.Nombre || "Sin nombre",
-      codigoLicitacion: item.CodigoLicitacion || "N/A",
-      institucion: item.NombreOrganismo || "N/D",
-      razonSocialProveedor: item.RazonSocial || item.RazonSocialProveedor || "N/D",
-      rutProveedor: item.RutProveedor || "N/D",
-      fechaEnvio: item.FechaEnvio || "-",
-      fechaAceptacion: item.FechaAceptacion || "-",
-      monto: item.Total || item.Monto || "0",
-      moneda: item.Moneda || "CLP",
-      estado: item.Estado || item.CodigoEstado || "Desconocido",
-    }));
+    const items = listado.map((item: any) => {
+      const fechaEnvio = item.Fechas?.FechaEnvio || item.FechaEnvio || "-";
+      const fechaAceptacion = item.Fechas?.FechaAceptacion || item.FechaAceptacion || "-";
+      const monto = item.Total || item.Monto || 0;
+
+      return {
+        id: item.Codigo || crypto.randomUUID(),
+        codigo: item.Codigo || "N/A",
+        nombre: item.Nombre || "Sin nombre",
+        codigoLicitacion: item.CodigoLicitacion || "N/A",
+        institucion: item.Comprador?.NombreOrganismo || item.NombreOrganismo || "N/D",
+        razonSocialProveedor: item.Proveedor?.RazonSocial || item.RazonSocial || item.RazonSocialProveedor || "N/D",
+        rutProveedor: item.Proveedor?.RutProveedor || item.RutProveedor || "N/D",
+        fechaEnvio: fechaEnvio !== "-" ? new Date(fechaEnvio).toLocaleDateString('es-CL') : "-",
+        fechaAceptacion: fechaAceptacion !== "-" ? new Date(fechaAceptacion).toLocaleDateString('es-CL') : "-",
+        monto: monto ? `$${(monto / 1000000).toFixed(1)}M` : "$0",
+        moneda: item.Moneda || "CLP",
+        estado: item.Estado || "Desconocido",
+        rawData: item,
+      };
+    });
 
     return NextResponse.json({ items });
   } catch (error) {
