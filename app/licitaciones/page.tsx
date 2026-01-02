@@ -146,7 +146,7 @@ export default function LicitacionesPage() {
       </header>
 
       <div className="flex-1 space-y-6 p-6">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div className="mx-auto flex w-full flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="border-white/10 bg-white/10 text-white shadow-lg backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

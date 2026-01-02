@@ -80,7 +80,7 @@ export default async function UsuariosPage() {
             </p>
           </div>
         </div>
-        <Button variant="primary" asChild>
+        <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
           <Link href="/usuarios/nuevo">
             <Plus className="mr-2 h-4 w-4" />
             Crear Usuario
@@ -89,7 +89,7 @@ export default async function UsuariosPage() {
       </header>
 
       <div className="flex-1 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
-        <div className="mx-auto max-w-7xl space-y-6">
+        <div className="mx-auto w-full space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
@@ -159,7 +159,7 @@ export default async function UsuariosPage() {
                       Crea el primer usuario para comenzar
                     </p>
                   </div>
-                  <Button variant="primary" asChild>
+                  <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
                     <Link href="/usuarios/nuevo">
                       <Plus className="mr-2 h-4 w-4" />
                       Crear primer usuario

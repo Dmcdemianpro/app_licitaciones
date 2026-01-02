@@ -53,28 +53,28 @@ export default async function Dashboard() {
       value: openTickets.toString(),
       description: "Pendientes de atención",
       icon: TicketIcon,
-      accent: "bg-amber-100 text-amber-700",
+      accent: "bg-amber-500/20 text-amber-300",
     },
     {
       title: "En progreso",
       value: inProgress.toString(),
       description: "Atendiéndose ahora",
       icon: CheckCircle,
-      accent: "bg-sky-100 text-sky-700",
+      accent: "bg-sky-500/20 text-sky-300",
     },
     {
       title: "Finalizados",
       value: finishedTickets.toString(),
       description: "Resueltos o cerrados",
       icon: Calendar,
-      accent: "bg-emerald-100 text-emerald-700",
+      accent: "bg-emerald-500/20 text-emerald-300",
     },
     {
       title: "Total de tickets",
       value: totalTickets.toString(),
       description: "Histórico en la plataforma",
       icon: TrendingUp,
-      accent: "bg-indigo-100 text-indigo-700",
+      accent: "bg-indigo-500/20 text-indigo-300",
     },
   ];
 
