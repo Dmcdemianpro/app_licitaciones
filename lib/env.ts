@@ -24,6 +24,12 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
+
+  // API de Mercado Público
+  MERCADOPUBLICO_APIKEY: z
+    .string()
+    .uuid('MERCADOPUBLICO_APIKEY debe ser un UUID válido')
+    .min(1, 'MERCADOPUBLICO_APIKEY es requerida para integración con Mercado Público'),
 })
 
 // Tipo inferido del schema
@@ -38,6 +44,7 @@ function validateEnv(): Env {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST,
       NODE_ENV: process.env.NODE_ENV,
+      MERCADOPUBLICO_APIKEY: process.env.MERCADOPUBLICO_APIKEY,
     })
 
     return env

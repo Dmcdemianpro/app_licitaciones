@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { env } from "@/lib/env";
 
-const BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json";
+const BASE_URL = "https://api.mercadopublico.cl/servicios/v1/publico/ordenesdecompra.json";
 
 function formatToday(): string {
   const now = new Date();
@@ -13,23 +13,23 @@ function formatToday(): string {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q")?.trim() || "";
-  const estado = searchParams.get("estado") || "todos";
+  const codigo = searchParams.get("codigo")?.trim() || "";
   const ticket = env.MERCADOPUBLICO_APIKEY;
   const fecha = searchParams.get("fecha"); // opcional ddmmaaaa
   const codigoOrganismo = searchParams.get("organismo");
   const codigoProveedor = searchParams.get("proveedor");
+  const estado = searchParams.get("estado");
 
   const params = new URLSearchParams({ ticket });
 
-  // Si viene código en q, usamos búsqueda por código; si no, por fecha + estado/organismo/proveedor.
-  if (q) {
-    params.set("codigo", q);
+  // Si viene código, usamos búsqueda por código; si no, por fecha + filtros opcionales.
+  if (codigo) {
+    params.set("codigo", codigo);
   } else {
     params.set("fecha", fecha || formatToday());
-    params.set("estado", estado || "todos");
     if (codigoOrganismo) params.set("CodigoOrganismo", codigoOrganismo);
     if (codigoProveedor) params.set("CodigoProveedor", codigoProveedor);
+    if (estado) params.set("estado", estado);
   }
 
   const url = `${BASE_URL}?${params.toString()}`;
@@ -43,22 +43,25 @@ export async function GET(req: Request) {
 
     const listado = Array.isArray(data?.Listado) ? data.Listado : [];
     const items = listado.map((item: any) => ({
-      id: item.Codigo || item.CodigoExterno || crypto.randomUUID(),
-      codigo: item.Codigo || item.CodigoExterno || "N/A",
-      nombre: item.Nombre || item.NombreLicitacion || "Sin nombre",
-      institucion: item.NombreOrganismo || item.NombreInstitucion || "N/D",
-      fechaPublicacion: item.FechaPublicacion || item.Fecha || "-",
-      fechaCierre: item.FechaCierre || "-",
-      montoEstimado: item.MontoEstimado || item.Monto || "-",
-      estado: item.Estado || item.CodigoEstadoDescripcion || item.CodigoEstado || "Desconocido",
-      diasRestantes: undefined,
+      id: item.Codigo || crypto.randomUUID(),
+      codigo: item.Codigo || "N/A",
+      nombre: item.Nombre || "Sin nombre",
+      codigoLicitacion: item.CodigoLicitacion || "N/A",
+      institucion: item.NombreOrganismo || "N/D",
+      razonSocialProveedor: item.RazonSocial || item.RazonSocialProveedor || "N/D",
+      rutProveedor: item.RutProveedor || "N/D",
+      fechaEnvio: item.FechaEnvio || "-",
+      fechaAceptacion: item.FechaAceptacion || "-",
+      monto: item.Total || item.Monto || "0",
+      moneda: item.Moneda || "CLP",
+      estado: item.Estado || item.CodigoEstado || "Desconocido",
     }));
 
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("Error consultando MercadoPublico", error);
+    console.error("Error consultando Órdenes de Compra de MercadoPublico", error);
     return NextResponse.json(
-      { error: "No se pudo obtener licitaciones" },
+      { error: "No se pudo obtener órdenes de compra" },
       { status: 500 }
     );
   }
