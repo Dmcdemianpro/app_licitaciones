@@ -66,7 +66,7 @@ const adminItems = [
 
 export function AppSidebar() {
   return (
-    <Sidebar className="bg-gradient-to-b from-white via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100">
+    <Sidebar className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <SidebarHeader className="border-b border-slate-200 dark:border-white/10">
         <div className="flex items-center gap-2 px-4 py-3">
           <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
@@ -120,7 +120,7 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-slate-200 dark:border-white/10">
         <div className="p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-400">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>Sistema Activo</span>
           </div>
