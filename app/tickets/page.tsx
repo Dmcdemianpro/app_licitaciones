@@ -130,7 +130,7 @@ export default function TicketsPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Tickets</p>
             <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Gestión centralizada</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Controla tus incidencias con filtros dinámicos</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">Controla tus incidencias con filtros dinámicos</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -161,16 +161,16 @@ export default function TicketsPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">Filtros</CardTitle>
-              <CardDescription className="text-slate-200">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Busca por título o ID y filtra por estado o prioridad
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <div className="md:col-span-1">
                 <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-600 dark:text-slate-300" />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-700 dark:text-slate-300" />
                   <Input
-                    className="border-white/20 bg-white/90 dark:bg-white/10 pl-8 text-slate-900 dark:text-white placeholder:text-slate-300"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 pl-8 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
                     placeholder="Buscar por título o ID"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -211,7 +211,7 @@ export default function TicketsPage() {
             <CardHeader className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">Listado de tickets</CardTitle>
-                <CardDescription className="text-slate-200">
+                <CardDescription className="text-slate-700 dark:text-slate-200">
                   Información en tiempo real desde la base de datos
                 </CardDescription>
               </div>
@@ -227,10 +227,10 @@ export default function TicketsPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              {error && <p className="text-sm text-red-300">{error.message}</p>}
-              {isLoading && <p className="text-sm text-slate-600 dark:text-slate-200">Cargando...</p>}
+              {error && <p className="text-sm text-red-600 dark:text-red-300">{error.message}</p>}
+              {isLoading && <p className="text-sm text-slate-800 dark:text-slate-200">Cargando...</p>}
               {!isLoading && !error && filteredTickets.length === 0 && (
-                <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-center text-sm text-slate-600 dark:text-slate-200">
+                <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-center text-sm text-slate-800 dark:text-slate-200">
                   No hay tickets para mostrar. Crea uno nuevo para comenzar.
                 </div>
               )}
