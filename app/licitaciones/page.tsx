@@ -43,7 +43,7 @@ export default function LicitacionesPage() {
   // Fetch para licitaciones guardadas en BD
   const { data: savedData, error: savedError, isLoading: savedLoading, mutate: mutateSaved } = useSWR(
     `/api/licitaciones?incluirEliminadas=${incluirEliminadas}`,
-    async (url) => {
+    async (url: string) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("No se pudo obtener licitaciones guardadas");
       return res.json();
