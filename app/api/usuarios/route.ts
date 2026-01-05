@@ -4,6 +4,57 @@ import { hash } from "bcrypt";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        activo: true,
+        telefono: true,
+        departamento: true,
+        cargo: true,
+        createdAt: true,
+        sessions: {
+          where: {
+            expires: {
+              gt: new Date(),
+            },
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Agregar campo isConnected basado en si tiene sesiones activas
+    const usersWithConnectionStatus = users.map((user) => ({
+      ...user,
+      isConnected: user.sessions.length > 0,
+      sessions: undefined, // Remover sessions del resultado
+    }));
+
+    return NextResponse.json({ users: usersWithConnectionStatus });
+  } catch (error) {
+    console.error("Error obteniendo usuarios:", error);
+    return NextResponse.json(
+      { error: "Error al obtener usuarios" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.role || session.user.role !== "ADMIN") {

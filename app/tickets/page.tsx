@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowUpRight, RefreshCcw, Search, TicketPlus } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,34 @@ export default function TicketsPage() {
 
   const formatDate = (value: string) =>
     new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(new Date(value));
+
+  const handleFinalizarTicket = async (ticketId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evitar navegar al detalle
+
+    if (!confirm("¿Estás seguro de finalizar este ticket?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "FINALIZADO" }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al finalizar ticket");
+        return;
+      }
+
+      toast.success("Ticket finalizado correctamente");
+      mutate(); // Recargar lista de tickets
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al finalizar ticket");
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -219,6 +248,7 @@ export default function TicketsPage() {
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Asignado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Creado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Actualizado</TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -226,7 +256,7 @@ export default function TicketsPage() {
                         <TableRow key={ticket.id} className="hover:bg-white/5 cursor-pointer" onClick={() => window.location.href = `/tickets/${ticket.id}`}>
                           <TableCell className="font-mono text-xs text-slate-600 dark:text-slate-200">{ticket.id}</TableCell>
                           <TableCell className="font-medium">{ticket.title}</TableCell>
-                          <TableCell className="text-slate-200">{ticket.type}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-200">{ticket.type}</TableCell>
                           <TableCell>
                             <Badge variant={getPriorityColor(ticket.priority)}>
                               {priorityLabels[ticket.priority]}
@@ -237,9 +267,22 @@ export default function TicketsPage() {
                               {statusLabels[ticket.status]}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-slate-200">{ticket.assignee || "Sin asignar"}</TableCell>
-                          <TableCell className="text-slate-200">{formatDate(ticket.createdAt)}</TableCell>
-                          <TableCell className="text-slate-200">{formatDate(ticket.updatedAt)}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-200">{ticket.assignee || "Sin asignar"}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.createdAt)}</TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.updatedAt)}</TableCell>
+                          <TableCell className="text-right">
+                            {ticket.status !== "FINALIZADO" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => handleFinalizarTicket(ticket.id, e)}
+                                className="border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Finalizar
+                              </Button>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

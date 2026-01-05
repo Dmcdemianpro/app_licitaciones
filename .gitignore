@@ -55,3 +55,4 @@ Thumbs.db
 # Prisma
 # Mantener las migraciones pero ignorar el cliente generado temporalmente si es necesario
 # /prisma/migrations/
+nul
