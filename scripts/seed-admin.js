@@ -1,0 +1,50 @@
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+
+const prisma = new PrismaClient();
+
+async function seedAdmin() {
+  try {
+    console.log('🌱 Creando usuario administrador...');
+
+    // Verificar si ya existe un admin
+    const existingAdmin = await prisma.user.findFirst({
+      where: { role: 'ADMIN' }
+    });
+
+    if (existingAdmin) {
+      console.log('⚠️  Ya existe un usuario administrador:');
+      console.log(`   Email: ${existingAdmin.email}`);
+      console.log(`   Nombre: ${existingAdmin.name}`);
+      return;
+    }
+
+    // Hash de la contraseña (puedes cambiarla)
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+
+    // Crear usuario admin
+    const admin = await prisma.user.create({
+      data: {
+        email: 'admin@hec.cl',
+        name: 'Administrador',
+        hashedPassword: hashedPassword,
+        role: 'ADMIN',
+        activo: true,
+        departamento: 'Administración',
+        cargo: 'Administrador del Sistema',
+      }
+    });
+
+    console.log('✅ Usuario administrador creado exitosamente!');
+    console.log('📧 Email: admin@hec.cl');
+    console.log('🔑 Contraseña: admin123');
+    console.log('⚠️  IMPORTANTE: Cambia la contraseña después de iniciar sesión');
+
+  } catch (error) {
+    console.error('❌ Error creando usuario:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+seedAdmin();
