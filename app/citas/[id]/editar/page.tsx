@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
@@ -24,7 +24,8 @@ type CitaForm = {
   urlReunion: string;
 };
 
-export default function EditarCitaPage({ params }: { params: { id: string } }) {
+export default function EditarCitaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [form, setForm] = useState<CitaForm>({
     titulo: "",
@@ -43,7 +44,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchCita = async () => {
       try {
-        const res = await fetch(`/api/citas/${params.id}`);
+        const res = await fetch(`/api/citas/${id}`);
         if (!res.ok) {
           throw new Error("No se pudo cargar la cita");
         }
@@ -71,7 +72,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
     };
 
     fetchCita();
-  }, [params.id]);
+  }, [id]);
 
   const handleChange = (key: keyof CitaForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -83,7 +84,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/citas/${params.id}`, {
+      const res = await fetch(`/api/citas/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
       });
 
       if (res.ok) {
-        router.push(`/citas/${params.id}`);
+        router.push(`/citas/${id}`);
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -168,7 +169,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
-          <Link href={`/citas/${params.id}`}>
+          <Link href={`/citas/${id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
           </Link>
@@ -313,7 +314,7 @@ export default function EditarCitaPage({ params }: { params: { id: string } }) {
                   className="border-white/30 text-white hover:bg-white/10"
                   type="button"
                 >
-                  <Link href={`/citas/${params.id}`}>Cancelar</Link>
+                  <Link href={`/citas/${id}`}>Cancelar</Link>
                 </Button>
               </div>
             </form>

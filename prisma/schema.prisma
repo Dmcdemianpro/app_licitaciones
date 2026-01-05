@@ -169,8 +169,8 @@ model CitaParticipante {
   asistio   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  cita User @relation("CitaUser", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user Cita @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  cita Cita @relation(fields: [citaId], references: [id], onDelete: Cascade)
+  user User @relation("CitaUser", fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([citaId, userId])
   @@map("cita_participantes")

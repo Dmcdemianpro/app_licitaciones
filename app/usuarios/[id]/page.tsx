@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Save, ShieldCheck, ArrowLeft } from "lucide-react";
@@ -24,7 +24,8 @@ type UserData = {
   cargo: string | null;
 };
 
-export default function EditarUsuarioPage({ params }: { params: { id: string } }) {
+export default function EditarUsuarioPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [form, setForm] = useState<UserData>({
     id: "",
@@ -43,7 +44,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch(`/api/usuarios/${params.id}`);
+        const res = await fetch(`/api/usuarios/${id}`);
         if (!res.ok) {
           throw new Error("No se pudo cargar el usuario");
         }
@@ -66,7 +67,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
     };
 
     fetchUser();
-  }, [params.id]);
+  }, [id]);
 
   const handleChange = (key: keyof UserData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -78,7 +79,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/usuarios/${params.id}`, {
+      const res = await fetch(`/api/usuarios/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -179,7 +180,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
                   <Label className="text-slate-200">Nombre</Label>
                   <Input
                     className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
-                    value={form.name}
+                    value={form.name ?? ""}
                     onChange={(e) => handleChange("name", e.target.value)}
                     placeholder="Nombre completo"
                   />
@@ -218,7 +219,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
                   <Label className="text-slate-200">Teléfono</Label>
                   <Input
                     className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
-                    value={form.telefono}
+                    value={form.telefono ?? ""}
                     onChange={(e) => handleChange("telefono", e.target.value)}
                     placeholder="+56 9 1234 5678"
                   />
@@ -230,7 +231,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
                   <Label className="text-slate-200">Departamento</Label>
                   <Input
                     className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
-                    value={form.departamento}
+                    value={form.departamento ?? ""}
                     onChange={(e) => handleChange("departamento", e.target.value)}
                     placeholder="Ej: Tecnología"
                   />
@@ -240,7 +241,7 @@ export default function EditarUsuarioPage({ params }: { params: { id: string } }
                   <Label className="text-slate-200">Cargo</Label>
                   <Input
                     className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
-                    value={form.cargo}
+                    value={form.cargo ?? ""}
                     onChange={(e) => handleChange("cargo", e.target.value)}
                     placeholder="Ej: Desarrollador"
                   />

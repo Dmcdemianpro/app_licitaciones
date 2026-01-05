@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -95,7 +95,8 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-export default function TicketDetailPage({ params }: { params: { id: string } }) {
+export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,21 +106,21 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
   const [notaContenido, setNotaContenido] = useState("");
   const [submittingNota, setSubmittingNota] = useState(false);
   const { data: notasData, mutate: mutateNotas } = useSWR(
-    `/api/tickets/${params.id}/notas`,
+    `/api/tickets/${id}/notas`,
     fetcher
   );
 
   // Documents
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const { data: docsData, mutate: mutateDocs } = useSWR(
-    `/api/tickets/${params.id}/documentos`,
+    `/api/tickets/${id}/documentos`,
     fetcher
   );
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const res = await fetch(`/api/tickets/${params.id}`);
+        const res = await fetch(`/api/tickets/${id}`);
         if (!res.ok) {
           throw new Error("No se pudo cargar el ticket");
         }
@@ -133,7 +134,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     };
 
     fetchTicket();
-  }, [params.id]);
+  }, [id]);
 
   const handleChangeStatus = async (newStatus: string) => {
     if (!confirm(`¿Estás seguro de cambiar el estado a ${statusLabels[newStatus]}?`)) {
@@ -141,7 +142,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     }
 
     try {
-      const res = await fetch(`/api/tickets/${params.id}`, {
+      const res = await fetch(`/api/tickets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -383,7 +384,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                     if (!notaContenido.trim()) return;
                     setSubmittingNota(true);
                     try {
-                      await fetch(`/api/tickets/${params.id}/notas`, {
+                      await fetch(`/api/tickets/${id}/notas`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ contenido: notaContenido }),
@@ -469,7 +470,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
                       const formData = new FormData();
                       formData.append("file", file);
 
-                      await fetch(`/api/tickets/${params.id}/documentos`, {
+                      await fetch(`/api/tickets/${id}/documentos`, {
                         method: "POST",
                         body: formData,
                       });

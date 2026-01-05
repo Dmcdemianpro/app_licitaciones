@@ -31,7 +31,7 @@ export async function GET(req: Request) {
         },
         participantes: {
           include: {
-            cita: {
+            user: {
               select: {
                 id: true,
                 name: true,

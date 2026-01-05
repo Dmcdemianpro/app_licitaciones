@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -91,7 +91,8 @@ const fetcher = async (url: string) => {
   return res.json();
 };
 
-export default function CitaDetailPage({ params }: { params: { id: string } }) {
+export default function CitaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [cita, setCita] = useState<Cita | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,21 +102,21 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
   const [notaContenido, setNotaContenido] = useState("");
   const [submittingNota, setSubmittingNota] = useState(false);
   const { data: notasData, mutate: mutateNotas } = useSWR(
-    `/api/citas/${params.id}/notas`,
+    `/api/citas/${id}/notas`,
     fetcher
   );
 
   // Documents
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const { data: docsData, mutate: mutateDocs } = useSWR(
-    `/api/citas/${params.id}/documentos`,
+    `/api/citas/${id}/documentos`,
     fetcher
   );
 
   useEffect(() => {
     const fetchCita = async () => {
       try {
-        const res = await fetch(`/api/citas/${params.id}`);
+        const res = await fetch(`/api/citas/${id}`);
         if (!res.ok) {
           throw new Error("No se pudo cargar la cita");
         }
@@ -129,7 +130,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
     };
 
     fetchCita();
-  }, [params.id]);
+  }, [id]);
 
   const handleFinalizar = async () => {
     if (!confirm("¿Estás seguro de que deseas marcar esta cita como completada?")) {
@@ -137,7 +138,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
     }
 
     try {
-      const res = await fetch(`/api/citas/${params.id}`, {
+      const res = await fetch(`/api/citas/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: "COMPLETADA" }),
@@ -160,7 +161,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
     }
 
     try {
-      const res = await fetch(`/api/citas/${params.id}`, {
+      const res = await fetch(`/api/citas/${id}`, {
         method: "DELETE",
       });
 
@@ -254,7 +255,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
             </Link>
           </Button>
           <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
-            <Link href={`/citas/${params.id}/editar`}>
+            <Link href={`/citas/${id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
@@ -424,7 +425,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
                     if (!notaContenido.trim()) return;
                     setSubmittingNota(true);
                     try {
-                      await fetch(`/api/citas/${params.id}/notas`, {
+                      await fetch(`/api/citas/${id}/notas`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ contenido: notaContenido }),
@@ -510,7 +511,7 @@ export default function CitaDetailPage({ params }: { params: { id: string } }) {
                       const formData = new FormData();
                       formData.append("file", file);
 
-                      await fetch(`/api/citas/${params.id}/documentos`, {
+                      await fetch(`/api/citas/${id}/documentos`, {
                         method: "POST",
                         body: formData,
                       });
