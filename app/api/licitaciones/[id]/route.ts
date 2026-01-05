@@ -31,6 +31,13 @@ export async function GET(
             email: true,
           },
         },
+        deletedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         notas: {
           include: {
             autor: {
@@ -69,6 +76,14 @@ export async function GET(
       );
     }
 
+    // SOFT DELETE: Verificar permiso ADMIN para ver eliminadas
+    if (licitacion.deletedAt && session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Licitación no encontrada" },
+        { status: 404 }
+      );
+    }
+
     // Calcular días restantes
     let diasRestantes = undefined;
     if (licitacion.fechaCierre) {
@@ -82,6 +97,7 @@ export async function GET(
         ...licitacion,
         diasRestantes,
         montoEstimado: licitacion.montoEstimado ? licitacion.montoEstimado.toString() : null,
+        folioFormateado: `HEC-${String(licitacion.folio).padStart(3, "0")}`,
       },
     });
   } catch (error) {
@@ -105,7 +121,16 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { responsableId, estado, descripcion } = body;
+    const { responsableId, estado, descripcion, unidadResponsable } = body;
+
+    // Verificar que no esté eliminada
+    const licitacionExistente = await prisma.licitacion.findUnique({ where: { id } });
+    if (licitacionExistente?.deletedAt) {
+      return NextResponse.json(
+        { error: "No se puede modificar una licitación eliminada" },
+        { status: 403 }
+      );
+    }
 
     const licitacion = await prisma.licitacion.update({
       where: { id },
@@ -113,6 +138,7 @@ export async function PATCH(
         ...(responsableId !== undefined && { responsableId }),
         ...(estado && { estado }),
         ...(descripcion !== undefined && { descripcion }),
+        ...(unidadResponsable !== undefined && { unidadResponsable }),
         updatedAt: new Date(),
       },
       include: {
@@ -133,5 +159,57 @@ export async function PATCH(
       { error: "Error al actualizar licitación" },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const { searchParams } = new URL(req.url);
+    const motivo = searchParams.get("motivo");
+
+    if (!motivo || motivo.trim().length < 10) {
+      return NextResponse.json(
+        { error: "Debe proporcionar un motivo de eliminación (mínimo 10 caracteres)" },
+        { status: 400 }
+      );
+    }
+
+    const licitacionExistente = await prisma.licitacion.findUnique({ where: { id } });
+
+    if (!licitacionExistente) {
+      return NextResponse.json({ error: "Licitación no encontrada" }, { status: 404 });
+    }
+
+    if (licitacionExistente.deletedAt) {
+      return NextResponse.json({ error: "La licitación ya está eliminada" }, { status: 400 });
+    }
+
+    const licitacion = await prisma.licitacion.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.user.id,
+        motivoEliminacion: motivo,
+        updatedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Licitación eliminada correctamente",
+      licitacion,
+    });
+  } catch (error) {
+    console.error("Error eliminando licitación:", error);
+    return NextResponse.json({ error: "Error al eliminar licitación" }, { status: 500 });
   }
 }

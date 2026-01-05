@@ -14,6 +14,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { formatCLP, formatFolio } from "@/lib/formatters";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -27,6 +39,11 @@ export default function LicitacionDetailPage() {
   const [subiendoDoc, setSubiendoDoc] = useState(false);
   const [descripcionDoc, setDescripcionDoc] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [motivoEliminacion, setMotivoEliminacion] = useState("");
+  const [eliminando, setEliminando] = useState(false);
+  const [editandoUnidad, setEditandoUnidad] = useState(false);
+  const [unidadTemp, setUnidadTemp] = useState("");
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/licitaciones/${id}`,
@@ -148,6 +165,59 @@ export default function LicitacionDetailPage() {
     }
   };
 
+  const handleGuardarUnidad = async () => {
+    try {
+      const res = await fetch(`/api/licitaciones/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unidadResponsable: unidadTemp }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al actualizar unidad responsable");
+        return;
+      }
+
+      toast.success("Unidad responsable actualizada");
+      setEditandoUnidad(false);
+      mutate();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al actualizar unidad responsable");
+    }
+  };
+
+  const handleEliminar = async () => {
+    if (motivoEliminacion.trim().length < 10) {
+      toast.error("El motivo debe tener al menos 10 caracteres");
+      return;
+    }
+
+    setEliminando(true);
+    try {
+      const res = await fetch(
+        `/api/licitaciones/${id}?motivo=${encodeURIComponent(motivoEliminacion)}`,
+        { method: "DELETE" }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Error al eliminar licitación");
+        return;
+      }
+
+      toast.success("Licitación eliminada correctamente");
+      router.push("/licitaciones");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al eliminar licitación");
+    } finally {
+      setEliminando(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVA":
@@ -221,16 +291,66 @@ export default function LicitacionDetailPage() {
           <SidebarTrigger />
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Licitación</p>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{licitacion.codigoExterno || "Sin código"}</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">{licitacion.nombre}</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              {licitacion.folioFormateado || formatFolio(licitacion.folio)}
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {licitacion.codigoExterno && (
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Código MP: {licitacion.codigoExterno} •{" "}
+                </span>
+              )}
+              {licitacion.nombre}
+            </p>
           </div>
         </div>
-        <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
-          <Link href="/licitaciones">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {!licitacion.deletedAt && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar licitación?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción marcará la licitación como eliminada. Solo los administradores podrán verla y restaurarla.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Motivo de eliminación (obligatorio, mínimo 10 caracteres)
+                  </label>
+                  <Textarea
+                    placeholder="Ej: Licitación duplicada, se debe usar HEC-042"
+                    value={motivoEliminacion}
+                    onChange={(e) => setMotivoEliminacion(e.target.value)}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleEliminar}
+                    disabled={eliminando || motivoEliminacion.trim().length < 10}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {eliminando ? "Eliminando..." : "Eliminar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
+            <Link href="/licitaciones">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 space-y-6 p-6">
@@ -270,11 +390,51 @@ export default function LicitacionDetailPage() {
                   <div>
                     <p className="text-sm font-medium text-slate-400">Monto Estimado</p>
                     <p className="text-base text-slate-900 dark:text-white">
-                      {licitacion.montoEstimado
-                        ? `${licitacion.moneda || "CLP"} $${(parseFloat(licitacion.montoEstimado) / 1000000).toFixed(1)}M`
-                        : "No especificado"}
+                      {formatCLP(licitacion.montoEstimado)}
                     </p>
                   </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-400">Unidad Responsable</p>
+                  {editandoUnidad ? (
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        value={unidadTemp}
+                        onChange={(e) => setUnidadTemp(e.target.value)}
+                        placeholder="Ej: Dpto. Adquisiciones"
+                        className="flex-1"
+                      />
+                      <Button size="sm" onClick={handleGuardarUnidad} className="bg-green-600 hover:bg-green-700">
+                        Guardar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditandoUnidad(false);
+                          setUnidadTemp("");
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="text-base text-slate-900 dark:text-white">
+                        {licitacion.unidadResponsable || "No asignada"}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditandoUnidad(true);
+                          setUnidadTemp(licitacion.unidadResponsable || "");
+                        }}
+                      >
+                        Editar
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 {licitacion.urlExterna && (
                   <div>
@@ -502,6 +662,32 @@ export default function LicitacionDetailPage() {
                   {new Date(licitacion.createdAt).toLocaleDateString('es-CL')}
                 </p>
               </div>
+              {licitacion.deletedAt && (
+                <>
+                  <div className="md:col-span-3">
+                    <Separator className="mb-4" />
+                    <p className="text-sm font-bold text-red-500 mb-2">LICITACIÓN ELIMINADA</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Eliminada por</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {licitacion.deletedBy?.name || "Desconocido"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Fecha de eliminación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.deletedAt).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Motivo de eliminación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {licitacion.motivoEliminacion}
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

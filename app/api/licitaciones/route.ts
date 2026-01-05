@@ -12,6 +12,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const estado = searchParams.get("estado");
     const responsableId = searchParams.get("responsableId");
+    const incluirEliminadas = searchParams.get("incluirEliminadas") === "true";
 
     // Construir filtros
     const where: any = {};
@@ -22,6 +23,11 @@ export async function GET(req: Request) {
 
     if (responsableId) {
       where.responsableId = responsableId;
+    }
+
+    // SOFT DELETE: Solo admins pueden ver eliminadas
+    if (!incluirEliminadas || session.user.role !== "ADMIN") {
+      where.deletedAt = null;
     }
 
     const licitaciones = await prisma.licitacion.findMany({
@@ -35,6 +41,13 @@ export async function GET(req: Request) {
           },
         },
         createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        deletedBy: {
           select: {
             id: true,
             name: true,
@@ -55,7 +68,7 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        folio: "desc",
       },
     });
 
@@ -72,6 +85,7 @@ export async function GET(req: Request) {
         ...licitacion,
         diasRestantes,
         montoEstimado: licitacion.montoEstimado ? licitacion.montoEstimado.toString() : null,
+        folioFormateado: `HEC-${String(licitacion.folio).padStart(3, "0")}`,
       };
     });
 

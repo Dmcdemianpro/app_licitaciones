@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { AlertTriangle, Calendar, Download, Eye, Search } from "lucide-react";
+import { AlertTriangle, Calendar, Download, Eye, Search, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -14,6 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCLP, formatCLPMillones, sumarMontos, formatFolio } from "@/lib/formatters";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function LicitacionesPage() {
   const [activeTab, setActiveTab] = useState("guardadas");
@@ -21,6 +25,10 @@ export default function LicitacionesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [importando, setImportando] = useState<string | null>(null);
+  const [incluirEliminadas, setIncluirEliminadas] = useState(false);
+
+  const { data: sessionData } = useSWR("/api/auth/session", fetcher);
+  const isAdmin = sessionData?.user?.role === "ADMIN";
 
   const estadoParamMap: Record<string, string> = {
     all: "todos",
@@ -34,7 +42,7 @@ export default function LicitacionesPage() {
 
   // Fetch para licitaciones guardadas en BD
   const { data: savedData, error: savedError, isLoading: savedLoading, mutate: mutateSaved } = useSWR(
-    "/api/licitaciones",
+    `/api/licitaciones?incluirEliminadas=${incluirEliminadas}`,
     async (url) => {
       const res = await fetch(url);
       if (!res.ok) throw new Error("No se pudo obtener licitaciones guardadas");
@@ -129,8 +137,33 @@ export default function LicitacionesPage() {
 
   const totalActivas = licitacionesGuardadas.filter((l: any) => l.estado?.toLowerCase().includes("activa")).length;
   const proximas = licitacionesGuardadas.filter((l: any) => (l.diasRestantes ?? 99) <= 7).length;
-  const totalMonto = licitacionesGuardadas.reduce((acc: number, l: any) => acc + (parseFloat(l.montoEstimado) || 0), 0);
+  const totalMonto = sumarMontos(licitacionesGuardadas);
   const adjudicadas = licitacionesGuardadas.filter((l: any) => l.estado?.toLowerCase().includes("adju")).length;
+
+  const handleRestaurar = async (id: string) => {
+    if (!confirm("¿Estás seguro de restaurar esta licitación?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/licitaciones/${id}/restaurar`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Error al restaurar licitación");
+        return;
+      }
+
+      toast.success("Licitación restaurada correctamente");
+      mutateSaved();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al restaurar licitación");
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -174,7 +207,7 @@ export default function LicitacionesPage() {
                 <span className="text-sm text-slate-600 dark:text-slate-200">$</span>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${totalMonto}K</div>
+                <div className="text-2xl font-bold">{formatCLP(totalMonto)}</div>
                 <p className="text-xs text-slate-600 dark:text-slate-200">Licitaciones activas</p>
               </CardContent>
             </Card>
@@ -209,7 +242,19 @@ export default function LicitacionesPage() {
                       Licitaciones guardadas en el sistema
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    {isAdmin && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="incluir-eliminadas"
+                          checked={incluirEliminadas}
+                          onCheckedChange={(checked) => setIncluirEliminadas(checked as boolean)}
+                        />
+                        <label htmlFor="incluir-eliminadas" className="text-sm text-slate-600 dark:text-slate-300 cursor-pointer">
+                          Incluir eliminadas
+                        </label>
+                      </div>
+                    )}
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-[200px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                         <SelectValue placeholder="Estado" />
@@ -241,61 +286,87 @@ export default function LicitacionesPage() {
                   )}
                   {!savedError && filteredLicitacionesGuardadas.length > 0 && (
                     <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader className="bg-white/10">
+                      <Table className="border-slate-200 dark:border-white/10">
+                        <TableHeader className="bg-slate-100 dark:bg-white/10">
                           <TableRow>
-                            <TableHead className="text-white">Código</TableHead>
-                            <TableHead className="text-white">Nombre</TableHead>
-                            <TableHead className="text-white">Entidad</TableHead>
-                            <TableHead className="text-white">Publicación</TableHead>
-                            <TableHead className="text-white">Cierre</TableHead>
-                            <TableHead className="text-white">Monto</TableHead>
-                            <TableHead className="text-white">Estado</TableHead>
-                            <TableHead className="text-white">Restante</TableHead>
-                            <TableHead className="text-white">Acciones</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Folio</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Código MP</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Nombre</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Entidad</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Publicación</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Cierre</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Monto</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Estado</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Restante</TableHead>
+                            <TableHead className="text-slate-900 dark:text-white font-semibold">Acciones</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {filteredLicitacionesGuardadas.map((licitacion: any) => (
-                            <TableRow key={licitacion.id} className="hover:bg-white/5">
-                              <TableCell className="text-slate-300">{licitacion.codigoExterno || "N/A"}</TableCell>
-                              <TableCell className="font-medium text-slate-900 dark:text-white">{licitacion.nombre}</TableCell>
-                              <TableCell className="text-slate-300">{licitacion.entidad}</TableCell>
-                              <TableCell className="text-slate-300">
+                            <TableRow
+                              key={licitacion.id}
+                              className={`hover:bg-slate-50 dark:hover:bg-white/5 border-slate-200 dark:border-white/10 ${
+                                licitacion.deletedAt ? "opacity-50" : ""
+                              }`}
+                            >
+                              <TableCell className="font-bold text-indigo-600 dark:text-indigo-400">
+                                {licitacion.folioFormateado || formatFolio(licitacion.folio)}
+                              </TableCell>
+                              <TableCell className="text-slate-600 dark:text-slate-300 text-xs font-mono">
+                                {licitacion.codigoExterno || "-"}
+                              </TableCell>
+                              <TableCell className="font-medium text-slate-900 dark:text-white">
+                                {licitacion.nombre}
+                                {licitacion.deletedAt && (
+                                  <Badge variant="destructive" className="ml-2 text-xs">Eliminada</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-slate-600 dark:text-slate-300">{licitacion.entidad}</TableCell>
+                              <TableCell className="text-slate-600 dark:text-slate-300">
                                 {licitacion.fechaPublicacion
                                   ? new Date(licitacion.fechaPublicacion).toLocaleDateString('es-CL')
                                   : "-"}
                               </TableCell>
-                              <TableCell className="text-slate-300">
+                              <TableCell className="text-slate-600 dark:text-slate-300">
                                 {licitacion.fechaCierre
                                   ? new Date(licitacion.fechaCierre).toLocaleDateString('es-CL')
                                   : "-"}
                               </TableCell>
-                              <TableCell className="text-slate-300">
-                                {licitacion.montoEstimado
-                                  ? `$${(parseFloat(licitacion.montoEstimado) / 1000000).toFixed(1)}M`
-                                  : "-"}
+                              <TableCell className="text-slate-600 dark:text-slate-300">
+                                {formatCLPMillones(licitacion.montoEstimado)}
                               </TableCell>
                               <TableCell>
-                                <Badge variant={getStatusColor(licitacion.estado)} className="text-white">
+                                <Badge variant="secondary" className="text-slate-900 dark:text-white">
                                   {licitacion.estado}
                                 </Badge>
                               </TableCell>
-                              <TableCell className={getDaysColor(licitacion.diasRestantes ?? 0)}>
+                              <TableCell className="text-slate-600 dark:text-slate-300">
                                 {licitacion.diasRestantes !== undefined ? `${licitacion.diasRestantes} días` : "-"}
                               </TableCell>
                               <TableCell>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  asChild
-                                  className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
-                                >
-                                  <Link href={`/licitaciones/${licitacion.id}`}>
-                                    <Eye className="mr-1 h-3 w-3" />
-                                    Ver
-                                  </Link>
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    asChild
+                                    className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
+                                  >
+                                    <Link href={`/licitaciones/${licitacion.id}`}>
+                                      <Eye className="mr-1 h-3 w-3" />
+                                      Ver
+                                    </Link>
+                                  </Button>
+                                  {isAdmin && licitacion.deletedAt && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleRestaurar(licitacion.id)}
+                                      className="border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10"
+                                    >
+                                      Restaurar
+                                    </Button>
+                                  )}
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
