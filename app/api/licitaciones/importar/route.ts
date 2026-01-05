@@ -9,6 +9,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    // Verificar que el usuario existe en la base de datos
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+
+    if (!userExists) {
+      console.error("User not found in database:", session.user.id);
+      return NextResponse.json(
+        { error: "Usuario de sesión no encontrado en base de datos. Por favor, cierre sesión y vuelva a iniciar." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { rawData } = body;
 
