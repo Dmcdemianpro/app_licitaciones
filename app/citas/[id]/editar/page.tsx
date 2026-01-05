@@ -115,12 +115,12 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center gap-4 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">Editar cita</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Editar cita</h1>
           </div>
         </header>
         <div className="flex flex-1 items-center justify-center">
@@ -132,19 +132,19 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
 
   if (error && !form.titulo) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center gap-4 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">Editar cita</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Editar cita</h1>
           </div>
         </header>
         <div className="flex flex-1 items-center justify-center">
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur max-w-md">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur max-w-md">
             <CardContent className="pt-6">
               <p className="text-center text-red-300">{error}</p>
-              <Button asChild className="mt-4 w-full bg-indigo-600 text-white hover:bg-indigo-700">
+              <Button asChild className="mt-4 w-full bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
                 <Link href="/citas">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Volver a citas
@@ -158,17 +158,17 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">Editar cita</h1>
-            <p className="text-sm text-slate-200">Modifica los datos de la cita</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Editar cita</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200">Modifica los datos de la cita</p>
           </div>
         </div>
-        <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
+        <Button variant="outline" asChild className="border-white/30 text-slate-900 dark:text-white hover:bg-white/10">
           <Link href={`/citas/${id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
@@ -176,8 +176,8 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
         </Button>
       </header>
 
-      <div className="flex-1 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
-        <Card className="mx-auto max-w-3xl border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+      <div className="flex-1 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
+        <Card className="mx-auto max-w-3xl border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
           <CardHeader>
             <CardTitle>Información de la cita</CardTitle>
             <CardDescription className="text-slate-200">
@@ -190,7 +190,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <Label className="text-slate-200">Título *</Label>
                 <Input
                   required
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   value={form.titulo}
                   onChange={(e) => handleChange("titulo", e.target.value)}
                   placeholder="Título de la cita"
@@ -200,7 +200,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
               <div className="space-y-2">
                 <Label className="text-slate-200">Descripción</Label>
                 <Textarea
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   value={form.descripcion}
                   onChange={(e) => handleChange("descripcion", e.target.value)}
                   placeholder="Detalles adicionales"
@@ -212,7 +212,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <div className="space-y-2">
                   <Label className="text-slate-200">Tipo</Label>
                   <Select value={form.tipo} onValueChange={(v) => handleChange("tipo", v)}>
-                    <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                    <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Selecciona un tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -228,7 +228,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <div className="space-y-2">
                   <Label className="text-slate-200">Estado</Label>
                   <Select value={form.estado} onValueChange={(v) => handleChange("estado", v)}>
-                    <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                    <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Selecciona un estado" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,7 +247,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                   <Input
                     required
                     type="datetime-local"
-                    className="border-white/20 bg-white/10 text-white"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
                     value={form.fechaInicio}
                     onChange={(e) => handleChange("fechaInicio", e.target.value)}
                   />
@@ -258,7 +258,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                   <Input
                     required
                     type="datetime-local"
-                    className="border-white/20 bg-white/10 text-white"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
                     value={form.fechaFin}
                     onChange={(e) => handleChange("fechaFin", e.target.value)}
                   />
@@ -269,7 +269,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <div className="space-y-2">
                   <Label className="text-slate-200">Ubicación</Label>
                   <Input
-                    className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                     value={form.ubicacion}
                     onChange={(e) => handleChange("ubicacion", e.target.value)}
                     placeholder="Lugar de la reunión"
@@ -280,7 +280,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                   <Label className="text-slate-200">URL de reunión virtual</Label>
                   <Input
                     type="url"
-                    className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                     value={form.urlReunion}
                     onChange={(e) => handleChange("urlReunion", e.target.value)}
                     placeholder="https://meet.google.com/..."
@@ -294,7 +294,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-indigo-600 text-white hover:bg-indigo-700"
+                  className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                 >
                   {saving ? (
                     <>
@@ -311,7 +311,7 @@ export default function EditarCitaPage({ params }: { params: Promise<{ id: strin
                 <Button
                   asChild
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+                  className="border-white/30 text-slate-900 dark:text-white hover:bg-white/10"
                   type="button"
                 >
                   <Link href={`/citas/${id}`}>Cancelar</Link>

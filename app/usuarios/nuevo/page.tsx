@@ -41,23 +41,23 @@ export default function NuevoUsuarioPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Usuarios</p>
-            <h1 className="text-3xl font-bold text-white">Crear usuario</h1>
-            <p className="text-sm text-slate-200">Completa los datos para registrar un nuevo usuario.</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Usuarios</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Crear usuario</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200">Completa los datos para registrar un nuevo usuario.</p>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
-        <Card className="mx-auto max-w-3xl border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+      <div className="flex-1 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
+        <Card className="mx-auto max-w-3xl border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-indigo-200" />
+              <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-200" />
               Datos del usuario
             </CardTitle>
             <CardDescription className="text-slate-200">
@@ -69,7 +69,7 @@ export default function NuevoUsuarioPage() {
               <div className="space-y-2">
                 <Label className="text-slate-200">Nombre</Label>
                 <Input
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   value={form.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   placeholder="Nombre completo"
@@ -80,7 +80,7 @@ export default function NuevoUsuarioPage() {
                 <Input
                   required
                   type="email"
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   value={form.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="usuario@correo.com"
@@ -91,7 +91,7 @@ export default function NuevoUsuarioPage() {
                 <Input
                   required
                   type="password"
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   value={form.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                   placeholder="••••••••"
@@ -100,7 +100,7 @@ export default function NuevoUsuarioPage() {
               <div className="space-y-2">
                 <Label className="text-slate-200">Rol</Label>
                 <Select value={form.role} onValueChange={(v) => handleChange("role", v)}>
-                  <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                  <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Selecciona un rol" />
                   </SelectTrigger>
                   <SelectContent>
@@ -124,7 +124,7 @@ export default function NuevoUsuarioPage() {
                 <Button
                   asChild
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
+                  className="border-white/30 text-slate-900 dark:text-white hover:bg-white/10"
                   type="button"
                 >
                   <Link href="/usuarios">Cancelar</Link>

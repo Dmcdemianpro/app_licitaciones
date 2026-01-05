@@ -29,19 +29,19 @@ export default function ReportesPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center gap-4 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <SidebarTrigger />
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Reportes</p>
-          <h1 className="text-3xl font-bold text-white">Reportes y análisis</h1>
-          <p className="text-sm text-slate-200">Genera reportes personalizados y explora plantillas.</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Reportes</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Reportes y análisis</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-200">Genera reportes personalizados y explora plantillas.</p>
         </div>
       </header>
 
-      <div className="flex-1 space-y-6 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
+      <div className="flex-1 space-y-6 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
         <div className="mx-auto flex w-full flex-col gap-6">
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Generar nuevo reporte</CardTitle>
               <CardDescription className="text-slate-200">
@@ -56,7 +56,7 @@ export default function ReportesPage() {
                     value={filtros.tipoReporte}
                     onValueChange={(value) => setFiltros((prev) => ({ ...prev, tipoReporte: value }))}
                   >
-                    <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                    <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Selecciona un tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -72,7 +72,7 @@ export default function ReportesPage() {
                     type="date"
                     value={filtros.fechaInicio}
                     onChange={(e) => setFiltros((prev) => ({ ...prev, fechaInicio: e.target.value }))}
-                    className="border-white/20 bg-white/10 text-white"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -81,7 +81,7 @@ export default function ReportesPage() {
                     type="date"
                     value={filtros.fechaFin}
                     onChange={(e) => setFiltros((prev) => ({ ...prev, fechaFin: e.target.value }))}
-                    className="border-white/20 bg-white/10 text-white"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -96,7 +96,7 @@ export default function ReportesPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Plantillas de reporte</CardTitle>
               <CardDescription className="text-slate-200">Explora los tipos de reportes disponibles.</CardDescription>
@@ -105,14 +105,14 @@ export default function ReportesPage() {
               {reportesDisponibles.map((reporte) => (
                 <div
                   key={reporte.id}
-                  className="flex items-start gap-3 rounded-lg border border-white/15 bg-white/10 p-4 shadow-sm backdrop-blur"
+                  className="flex items-start gap-3 rounded-lg border border-white/15 bg-white/90 dark:bg-white/10 p-4 shadow-sm backdrop-blur"
                 >
                   <div className="rounded-md bg-indigo-500/20 p-2">
-                    <reporte.icono className="h-4 w-4 text-indigo-200" />
+                    <reporte.icono className="h-4 w-4 text-indigo-600 dark:text-indigo-200" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{reporte.nombre}</p>
-                    <p className="text-sm text-slate-200">{reporte.descripcion}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-200">{reporte.descripcion}</p>
                   </div>
                   <Badge variant="secondary">{reporte.categoria}</Badge>
                 </div>
@@ -120,15 +120,15 @@ export default function ReportesPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Reportes recientes</CardTitle>
               <CardDescription className="text-slate-200">Historial de descargas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+              <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                 <Sparkles className="h-6 w-6 text-indigo-300" />
-                <p className="text-sm text-slate-200">
+                <p className="text-sm text-slate-600 dark:text-slate-200">
                   Aún no hay reportes generados. Usa el generador para crear el primero.
                 </p>
               </div>

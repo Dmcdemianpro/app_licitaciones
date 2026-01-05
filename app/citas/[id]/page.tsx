@@ -56,7 +56,7 @@ const getEstadoColor = (estado: string) => {
     case "CANCELADA":
       return "bg-red-500/20 text-red-300 border-red-500/30";
     default:
-      return "bg-slate-500/20 text-slate-300 border-slate-500/30";
+      return "bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/30";
   }
 };
 
@@ -194,12 +194,12 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center gap-4 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">Detalle de cita</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Detalle de cita</h1>
           </div>
         </header>
         <div className="flex flex-1 items-center justify-center">
@@ -211,19 +211,19 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
 
   if (error || !cita) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center gap-4 border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">Detalle de cita</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Detalle de cita</h1>
           </div>
         </header>
         <div className="flex flex-1 items-center justify-center">
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur max-w-md">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur max-w-md">
             <CardContent className="pt-6">
               <p className="text-center text-red-300">{error || "Cita no encontrada"}</p>
-              <Button asChild className="mt-4 w-full bg-indigo-600 text-white hover:bg-indigo-700">
+              <Button asChild className="mt-4 w-full bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
                 <Link href="/citas">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Volver a citas
@@ -237,24 +237,24 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas</p>
-            <h1 className="text-3xl font-bold text-white">{cita.titulo}</h1>
-            <p className="text-sm text-slate-200">Información completa de la cita</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{cita.titulo}</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200">Información completa de la cita</p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
+          <Button variant="outline" asChild className="border-white/30 text-slate-900 dark:text-white hover:bg-white/10">
             <Link href="/citas">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver
             </Link>
           </Button>
-          <Button variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
+          <Button variant="outline" asChild className="border-white/30 text-slate-900 dark:text-white hover:bg-white/10">
             <Link href={`/citas/${id}/editar`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
@@ -281,10 +281,10 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </header>
 
-      <div className="flex-1 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
+      <div className="flex-1 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           {/* Main Info */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="space-y-2">
@@ -293,7 +293,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                     <Badge className={getEstadoColor(cita.estado)}>
                       {estadoLabels[cita.estado] || cita.estado}
                     </Badge>
-                    <Badge variant="outline" className="border-white/20 text-slate-300">
+                    <Badge variant="outline" className="border-white/20 text-slate-600 dark:text-slate-300">
                       {tipoLabels[cita.tipo] || cita.tipo}
                     </Badge>
                   </div>
@@ -307,7 +307,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="flex items-center gap-3 text-slate-300">
+                <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                   <Calendar className="h-5 w-5 text-slate-500 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500">Fecha</p>
@@ -315,7 +315,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-slate-300">
+                <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                   <Clock className="h-5 w-5 text-slate-500 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-slate-500">Horario</p>
@@ -326,7 +326,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {cita.ubicacion && (
-                  <div className="flex items-center gap-3 text-slate-300">
+                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                     <MapPin className="h-5 w-5 text-slate-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs text-slate-500">Ubicación</p>
@@ -336,7 +336,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                 )}
 
                 {cita.urlReunion && (
-                  <div className="flex items-center gap-3 text-slate-300">
+                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                     <Video className="h-5 w-5 text-slate-500 flex-shrink-0" />
                     <div>
                       <p className="text-xs text-slate-500">Reunión virtual</p>
@@ -357,7 +357,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Organizador y Participantes */}
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <User className="h-5 w-5 text-indigo-400" />
@@ -376,7 +376,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="h-5 w-5 text-indigo-400" />
@@ -401,7 +401,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {/* Notas */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-indigo-400" />
@@ -414,7 +414,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Textarea
-                  className="border-white/20 bg-white/10 text-white placeholder:text-slate-300"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   placeholder="Escribe una nota o minuta..."
                   rows={3}
                   value={notaContenido}
@@ -439,7 +439,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                     }
                   }}
                   disabled={submittingNota || !notaContenido.trim()}
-                  className="bg-indigo-600 text-white hover:bg-indigo-700"
+                  className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   {submittingNota ? "Guardando..." : "Agregar nota"}
@@ -451,9 +451,9 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                   notasData.notas.map((nota: any) => (
                     <div
                       key={nota.id}
-                      className="rounded-lg border border-white/15 bg-white/5 p-4"
+                      className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4"
                     >
-                      <p className="text-sm text-slate-300 whitespace-pre-wrap">
+                      <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
                         {nota.contenido}
                       </p>
                       <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
@@ -473,7 +473,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                     <FileText className="h-8 w-8 text-slate-500" />
                     <p className="text-sm text-slate-400">
                       No hay notas aún. Agrega la primera nota arriba.
@@ -485,7 +485,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
           </Card>
 
           {/* Documentos */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Upload className="h-5 w-5 text-indigo-400" />
@@ -501,7 +501,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                 <Input
                   type="file"
                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
-                  className="border-white/20 bg-white/10 text-white file:mr-4 file:rounded file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:text-white hover:file:bg-indigo-700"
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white file:mr-4 file:rounded file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:text-sm file:text-white hover:file:bg-indigo-700"
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -536,7 +536,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                   docsData.documentos.map((doc: any) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between rounded-lg border border-white/15 bg-white/5 p-4"
+                      className="flex items-center justify-between rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4"
                     >
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-indigo-500/20 p-2">
@@ -559,7 +559,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                         variant="outline"
                         size="sm"
                         asChild
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="border-white/20 text-slate-900 dark:text-white hover:bg-white/10"
                       >
                         <a href={doc.rutaArchivo} download target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4" />
@@ -568,7 +568,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
                     </div>
                   ))
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                     <Upload className="h-8 w-8 text-slate-500" />
                     <p className="text-sm text-slate-400">
                       No hay documentos aún. Sube el primer documento arriba.

@@ -43,7 +43,7 @@ const getEstadoColor = (estado: string) => {
     case "CANCELADA":
       return "bg-red-500/20 text-red-300 border-red-500/30";
     default:
-      return "bg-slate-500/20 text-slate-300 border-slate-500/30";
+      return "bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/30";
   }
 };
 
@@ -134,17 +134,17 @@ export default function CitasPage() {
   }).length;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Citas y eventos</p>
-            <h1 className="text-3xl font-bold text-white">Agenda del equipo</h1>
-            <p className="text-sm text-slate-200">Programa y registra tus reuniones.</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas y eventos</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agenda del equipo</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200">Programa y registra tus reuniones.</p>
           </div>
         </div>
-        <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
+        <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
           <Link href="/citas/nueva">
             <Plus className="mr-2 h-4 w-4" />
             Nueva Cita
@@ -152,23 +152,23 @@ export default function CitasPage() {
         </Button>
       </header>
 
-      <div className="flex-1 bg-gradient-to-b from-white/5 via-white/0 to-white/0 p-6">
+      <div className="flex-1 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
         <div className="mx-auto flex w-full flex-col gap-6">
           {/* Stats Cards */}
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-400">Total Citas</p>
-                    <p className="text-2xl font-bold text-white">{citas.length}</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{citas.length}</p>
                   </div>
                   <Calendar className="h-8 w-8 text-indigo-400" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -180,7 +180,7 @@ export default function CitasPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -194,7 +194,7 @@ export default function CitasPage() {
           </div>
 
           {/* Filters */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="text-lg">Filtros</CardTitle>
               <CardDescription className="text-slate-300">
@@ -203,7 +203,7 @@ export default function CitasPage() {
             </CardHeader>
             <CardContent>
               <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                <SelectTrigger className="w-[200px] border-white/20 bg-white/10 text-white">
+                <SelectTrigger className="w-[200px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,7 +218,7 @@ export default function CitasPage() {
           </Card>
 
           {/* Citas List */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="text-lg">Lista de Citas</CardTitle>
               <CardDescription className="text-slate-300">
@@ -227,17 +227,17 @@ export default function CitasPage() {
             </CardHeader>
             <CardContent>
               {error && <p className="text-sm text-red-300">No se pudo obtener citas.</p>}
-              {isLoading && <p className="text-sm text-slate-300">Cargando citas...</p>}
+              {isLoading && <p className="text-sm text-slate-600 dark:text-slate-300">Cargando citas...</p>}
               {!isLoading && citas.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-10 text-center">
+                <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-10 text-center">
                   <Calendar className="h-10 w-10 text-indigo-300" />
                   <div>
-                    <p className="text-base font-semibold text-white">Sin citas registradas</p>
-                    <p className="text-sm text-slate-300 mt-2">
+                    <p className="text-base font-semibold text-slate-900 dark:text-white">Sin citas registradas</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
                       Crea tu primera cita para comenzar a gestionar tu agenda
                     </p>
                   </div>
-                  <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
+                  <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
                     <Link href="/citas/nueva">
                       <Plus className="mr-2 h-4 w-4" />
                       Crear primera cita
@@ -251,18 +251,18 @@ export default function CitasPage() {
                   {citas.map((cita) => (
                     <Card
                       key={cita.id}
-                      className="border-white/10 bg-white/5 text-white shadow-lg backdrop-blur hover:bg-white/10 transition-all"
+                      className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-lg backdrop-blur hover:bg-white/10 transition-all"
                     >
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-3">
                             <div className="flex items-start justify-between gap-4 flex-wrap">
                               <div className="flex items-center gap-3 flex-wrap">
-                                <h3 className="text-xl font-semibold text-white">{cita.titulo}</h3>
+                                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{cita.titulo}</h3>
                                 <Badge className={getEstadoColor(cita.estado)}>
                                   {estadoLabels[cita.estado] || cita.estado}
                                 </Badge>
-                                <Badge variant="outline" className="border-white/20 text-slate-300">
+                                <Badge variant="outline" className="border-white/20 text-slate-600 dark:text-slate-300">
                                   {tipoLabels[cita.tipo] || cita.tipo}
                                 </Badge>
                               </div>
@@ -271,7 +271,7 @@ export default function CitasPage() {
                                   variant="outline"
                                   size="sm"
                                   asChild
-                                  className="border-white/20 text-white hover:bg-white/10"
+                                  className="border-white/20 text-slate-900 dark:text-white hover:bg-white/10"
                                 >
                                   <Link href={`/citas/${cita.id}`}>
                                     <Eye className="h-4 w-4 mr-1" />
@@ -282,7 +282,7 @@ export default function CitasPage() {
                                   variant="outline"
                                   size="sm"
                                   asChild
-                                  className="border-white/20 text-white hover:bg-white/10"
+                                  className="border-white/20 text-slate-900 dark:text-white hover:bg-white/10"
                                 >
                                   <Link href={`/citas/${cita.id}/editar`}>
                                     <Edit className="h-4 w-4 mr-1" />
@@ -313,16 +313,16 @@ export default function CitasPage() {
                             </div>
 
                             {cita.descripcion && (
-                              <p className="text-sm text-slate-300">{cita.descripcion}</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-300">{cita.descripcion}</p>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                              <div className="flex items-center gap-2 text-sm text-slate-300">
+                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                 <Calendar className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                 <span>{formatDate(cita.fechaInicio)}</span>
                               </div>
 
-                              <div className="flex items-center gap-2 text-sm text-slate-300">
+                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                 <Clock className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                 <span>
                                   {formatTime(cita.fechaInicio)} - {formatTime(cita.fechaFin)}
@@ -330,14 +330,14 @@ export default function CitasPage() {
                               </div>
 
                               {cita.ubicacion && (
-                                <div className="flex items-center gap-2 text-sm text-slate-300">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                   <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                   <span className="truncate">{cita.ubicacion}</span>
                                 </div>
                               )}
 
                               {cita.urlReunion && (
-                                <div className="flex items-center gap-2 text-sm text-slate-300">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                   <Video className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                   <a
                                     href={cita.urlReunion}

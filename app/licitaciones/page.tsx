@@ -133,14 +133,14 @@ export default function LicitacionesPage() {
   const adjudicadas = licitacionesGuardadas.filter((l: any) => l.estado?.toLowerCase().includes("adju")).length;
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Licitaciones</p>
-            <h1 className="text-3xl font-bold text-white">Gestión de licitaciones</h1>
-            <p className="text-sm text-slate-200">Administra y da seguimiento a licitaciones públicas</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Licitaciones</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Gestión de licitaciones</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-200">Administra y da seguimiento a licitaciones públicas</p>
           </div>
         </div>
       </header>
@@ -148,50 +148,50 @@ export default function LicitacionesPage() {
       <div className="flex-1 space-y-6 p-6">
         <div className="mx-auto flex w-full flex-col gap-6">
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-white/10 bg-white/10 text-white shadow-lg backdrop-blur">
+            <Card className="border-white/10 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white shadow-lg backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Licitaciones Activas</CardTitle>
-                <Calendar className="h-4 w-4 text-indigo-200" />
+                <Calendar className="h-4 w-4 text-indigo-600 dark:text-indigo-200" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalActivas}</div>
-                <p className="text-xs text-slate-200">En proceso</p>
+                <p className="text-xs text-slate-600 dark:text-slate-200">En proceso</p>
               </CardContent>
             </Card>
-            <Card className="border-white/10 bg-white/10 text-white shadow-lg backdrop-blur">
+            <Card className="border-white/10 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white shadow-lg backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Próximas a Vencer</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-orange-300" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{proximas}</div>
-                <p className="text-xs text-slate-200">Menos de 7 días</p>
+                <p className="text-xs text-slate-600 dark:text-slate-200">Menos de 7 días</p>
               </CardContent>
             </Card>
-            <Card className="border-white/10 bg-white/10 text-white shadow-lg backdrop-blur">
+            <Card className="border-white/10 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white shadow-lg backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Monto Total</CardTitle>
-                <span className="text-sm text-slate-200">$</span>
+                <span className="text-sm text-slate-600 dark:text-slate-200">$</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">${totalMonto}K</div>
-                <p className="text-xs text-slate-200">Licitaciones activas</p>
+                <p className="text-xs text-slate-600 dark:text-slate-200">Licitaciones activas</p>
               </CardContent>
             </Card>
-            <Card className="border-white/10 bg-white/10 text-white shadow-lg backdrop-blur">
+            <Card className="border-white/10 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white shadow-lg backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Adjudicadas</CardTitle>
-                <span className="text-sm text-slate-200">✓</span>
+                <span className="text-sm text-slate-600 dark:text-slate-200">✓</span>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{adjudicadas}</div>
-                <p className="text-xs text-slate-200">Este mes</p>
+                <p className="text-xs text-slate-600 dark:text-slate-200">Este mes</p>
               </CardContent>
             </Card>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-white/10">
+            <TabsList className="grid w-full grid-cols-2 bg-white/90 dark:bg-white/10">
               <TabsTrigger value="guardadas" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                 Licitaciones Guardadas
               </TabsTrigger>
@@ -201,7 +201,7 @@ export default function LicitacionesPage() {
             </TabsList>
 
             <TabsContent value="guardadas" className="space-y-4">
-              <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+              <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <div>
                     <CardTitle className="text-white">Mis Licitaciones</CardTitle>
@@ -211,7 +211,7 @@ export default function LicitacionesPage() {
                   </div>
                   <div className="flex gap-2">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[200px] border-white/20 bg-white/10 text-white">
+                      <SelectTrigger className="w-[200px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                         <SelectValue placeholder="Estado" />
                       </SelectTrigger>
                       <SelectContent>
@@ -227,13 +227,13 @@ export default function LicitacionesPage() {
                 </CardHeader>
                 <CardContent>
                   {savedError && <p className="text-sm text-red-300">No se pudo obtener licitaciones guardadas.</p>}
-                  {savedLoading && <p className="text-sm text-slate-300">Cargando licitaciones...</p>}
+                  {savedLoading && <p className="text-sm text-slate-600 dark:text-slate-300">Cargando licitaciones...</p>}
                   {!savedLoading && filteredLicitacionesGuardadas.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
-                      <p className="text-sm text-slate-300">
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
                         Aún no hay licitaciones guardadas. Busca e importa licitaciones desde Mercado Público.
                       </p>
-                      <Button variant="default" onClick={() => setActiveTab("buscar")} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                      <Button variant="default" onClick={() => setActiveTab("buscar")} className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
                         <Search className="mr-2 h-4 w-4" />
                         Buscar Licitaciones
                       </Button>
@@ -259,7 +259,7 @@ export default function LicitacionesPage() {
                           {filteredLicitacionesGuardadas.map((licitacion: any) => (
                             <TableRow key={licitacion.id} className="hover:bg-white/5">
                               <TableCell className="text-slate-300">{licitacion.codigoExterno || "N/A"}</TableCell>
-                              <TableCell className="font-medium text-white">{licitacion.nombre}</TableCell>
+                              <TableCell className="font-medium text-slate-900 dark:text-white">{licitacion.nombre}</TableCell>
                               <TableCell className="text-slate-300">{licitacion.entidad}</TableCell>
                               <TableCell className="text-slate-300">
                                 {licitacion.fechaPublicacion
@@ -289,7 +289,7 @@ export default function LicitacionesPage() {
                                   size="sm"
                                   variant="default"
                                   asChild
-                                  className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                  className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                                 >
                                   <Link href={`/licitaciones/${licitacion.id}`}>
                                     <Eye className="mr-1 h-3 w-3" />
@@ -308,7 +308,7 @@ export default function LicitacionesPage() {
             </TabsContent>
 
             <TabsContent value="buscar" className="space-y-4">
-              <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+              <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-white">Búsqueda de licitación</CardTitle>
                   <CardDescription className="text-slate-300">
@@ -318,16 +318,16 @@ export default function LicitacionesPage() {
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-4">
                     <div className="relative min-w-[220px] flex-1">
-                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-300" />
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-600 dark:text-slate-300" />
                       <Input
                         placeholder="Código de licitación o texto..."
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
-                        className="border-white/20 bg-white/10 pl-8 text-white placeholder:text-slate-300"
+                        className="border-white/20 bg-white/90 dark:bg-white/10 pl-8 text-slate-900 dark:text-white placeholder:text-slate-300"
                       />
                     </div>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[200px] border-white/20 bg-white/10 text-white">
+                      <SelectTrigger className="w-[200px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                         <SelectValue placeholder="Estado" />
                       </SelectTrigger>
                       <SelectContent>
@@ -342,7 +342,7 @@ export default function LicitacionesPage() {
                       type="button"
                       onClick={() => setSearchTerm(searchInput)}
                       variant="default"
-                      className="bg-indigo-600 text-white hover:bg-indigo-700"
+                      className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                     >
                       <Search className="mr-2 h-4 w-4" />
                       Buscar
@@ -351,7 +351,7 @@ export default function LicitacionesPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+              <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
                 <CardHeader>
                   <CardTitle className="text-white">Resultados de Búsqueda</CardTitle>
                   <CardDescription className="text-slate-300">
@@ -360,17 +360,17 @@ export default function LicitacionesPage() {
                 </CardHeader>
                 <CardContent>
                   {searchError && <p className="text-sm text-red-300">No se pudo obtener licitaciones.</p>}
-                  {searchLoading && <p className="text-sm text-slate-300">Cargando licitaciones...</p>}
+                  {searchLoading && <p className="text-sm text-slate-600 dark:text-slate-300">Cargando licitaciones...</p>}
                   {!searchLoading && !searchTerm && (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
-                      <p className="text-sm text-slate-300">
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
                         Ingresa un código o texto para buscar licitaciones en Mercado Público.
                       </p>
                     </div>
                   )}
                   {!searchLoading && searchTerm && filteredLicitacionesBusqueda.length === 0 && (
-                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
-                      <p className="text-sm text-slate-300">
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
+                      <p className="text-sm text-slate-600 dark:text-slate-300">
                         No se encontraron licitaciones que coincidan con tu búsqueda.
                       </p>
                     </div>
@@ -395,7 +395,7 @@ export default function LicitacionesPage() {
                           {filteredLicitacionesBusqueda.map((licitacion: any) => (
                             <TableRow key={licitacion.id} className="hover:bg-white/5">
                               <TableCell className="text-slate-300">{licitacion.codigo}</TableCell>
-                              <TableCell className="font-medium text-white">{licitacion.nombre}</TableCell>
+                              <TableCell className="font-medium text-slate-900 dark:text-white">{licitacion.nombre}</TableCell>
                               <TableCell className="text-slate-300">{licitacion.institucion}</TableCell>
                               <TableCell className="text-slate-300">{licitacion.fechaPublicacion}</TableCell>
                               <TableCell className="text-slate-300">{licitacion.fechaCierre}</TableCell>
@@ -414,7 +414,7 @@ export default function LicitacionesPage() {
                                   variant="default"
                                   onClick={() => handleImportar(licitacion)}
                                   disabled={importando === licitacion.id}
-                                  className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                  className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                                 >
                                   {importando === licitacion.id ? (
                                     <>Guardando...</>

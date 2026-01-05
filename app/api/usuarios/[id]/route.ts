@@ -109,3 +109,61 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    // Verificar que el usuario sea administrador
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: "Solo los administradores pueden eliminar usuarios" },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+
+    // Verificar que el usuario no se esté eliminando a sí mismo
+    if (session.user.id === id) {
+      return NextResponse.json(
+        { error: "No puedes eliminar tu propia cuenta" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que el usuario existe
+    const userToDelete = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!userToDelete) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Eliminar el usuario (las relaciones en cascada se manejan en el schema)
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Usuario eliminado exitosamente"
+    });
+  } catch (error) {
+    console.error("Error eliminando usuario:", error);
+    return NextResponse.json(
+      { error: "Error al eliminar usuario" },
+      { status: 500 }
+    );
+  }
+}

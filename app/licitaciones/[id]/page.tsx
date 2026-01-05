@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import useSWR from "swr";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -13,6 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function LicitacionDetailPage() {
   const params = useParams();
@@ -21,6 +24,9 @@ export default function LicitacionDetailPage() {
 
   const [nuevaNota, setNuevaNota] = useState("");
   const [enviandoNota, setEnviandoNota] = useState(false);
+  const [subiendoDoc, setSubiendoDoc] = useState(false);
+  const [descripcionDoc, setDescripcionDoc] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/licitaciones/${id}`,
@@ -32,6 +38,12 @@ export default function LicitacionDetailPage() {
   );
 
   const licitacion = data?.licitacion;
+
+  // Fetch documents separately for real-time updates
+  const { data: docsData, mutate: mutateDocs } = useSWR(
+    `/api/licitaciones/${id}/documentos`,
+    fetcher
+  );
 
   const handleAgregarNota = async () => {
     if (!nuevaNota.trim()) {
@@ -64,6 +76,78 @@ export default function LicitacionDetailPage() {
     }
   };
 
+  const handleSubirDocumento = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar que sea PDF
+    if (file.type !== "application/pdf") {
+      toast.error("Solo se permiten archivos PDF");
+      return;
+    }
+
+    // Validar tamaño (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error("El archivo es demasiado grande (máximo 10MB)");
+      return;
+    }
+
+    setSubiendoDoc(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("descripcion", descripcionDoc);
+
+      const res = await fetch(`/api/licitaciones/${id}/documentos`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al subir documento");
+        return;
+      }
+
+      toast.success("Documento subido correctamente");
+      setDescripcionDoc("");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      mutateDocs(); // Recargar documentos
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al subir documento");
+    } finally {
+      setSubiendoDoc(false);
+    }
+  };
+
+  const handleEliminarDocumento = async (documentoId: string) => {
+    if (!confirm("¿Estás seguro de eliminar este documento?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/licitaciones/${id}/documentos?documentoId=${documentoId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al eliminar documento");
+        return;
+      }
+
+      toast.success("Documento eliminado");
+      mutateDocs(); // Recargar documentos
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al eliminar documento");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVA":
@@ -90,13 +174,13 @@ export default function LicitacionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <div className="flex items-center gap-4">
             <SidebarTrigger />
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Licitación</p>
-              <h1 className="text-3xl font-bold text-white">Cargando...</h1>
+              <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Licitación</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Cargando...</h1>
             </div>
           </div>
         </header>
@@ -109,19 +193,19 @@ export default function LicitacionDetailPage() {
 
   if (error || !licitacion) {
     return (
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-        <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+        <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
           <div className="flex items-center gap-4">
             <SidebarTrigger />
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Licitación</p>
-              <h1 className="text-3xl font-bold text-white">Error</h1>
+              <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Licitación</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Error</h1>
             </div>
           </div>
         </header>
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <p className="text-red-300">No se pudo cargar la licitación</p>
-          <Button variant="default" onClick={() => router.push("/licitaciones")} className="bg-indigo-600 text-white hover:bg-indigo-700">
+          <Button variant="default" onClick={() => router.push("/licitaciones")} className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver a Licitaciones
           </Button>
@@ -131,17 +215,17 @@ export default function LicitacionDetailPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 text-slate-50">
-      <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-6 py-4 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 px-6 py-4 backdrop-blur">
         <div className="flex items-center gap-4">
           <SidebarTrigger />
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-indigo-200">Licitación</p>
-            <h1 className="text-3xl font-bold text-white">{licitacion.codigoExterno || "Sin código"}</h1>
-            <p className="text-sm text-slate-300">{licitacion.nombre}</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Licitación</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{licitacion.codigoExterno || "Sin código"}</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{licitacion.nombre}</p>
           </div>
         </div>
-        <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
+        <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
           <Link href="/licitaciones">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
@@ -153,39 +237,39 @@ export default function LicitacionDetailPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
           {/* Información general */}
           <div className="grid gap-6 md:grid-cols-3">
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur md:col-span-2">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur md:col-span-2">
               <CardHeader>
                 <CardTitle className="text-white">Información General</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">Nombre</p>
-                  <p className="text-base text-white">{licitacion.nombre}</p>
+                  <p className="text-base text-slate-900 dark:text-white">{licitacion.nombre}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-400">Descripción</p>
-                  <p className="text-base text-slate-300">{licitacion.descripcion || "Sin descripción"}</p>
+                  <p className="text-base text-slate-600 dark:text-slate-300">{licitacion.descripcion || "Sin descripción"}</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <p className="text-sm font-medium text-slate-400">Entidad</p>
-                    <p className="text-base text-white">{licitacion.entidad}</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.entidad}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-400">Tipo</p>
-                    <p className="text-base text-white">{licitacion.tipo}</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tipo}</p>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <p className="text-sm font-medium text-slate-400">Estado</p>
-                    <Badge variant={getStatusColor(licitacion.estado)} className="mt-1 text-white">
+                    <Badge variant={getStatusColor(licitacion.estado)} className="mt-1 text-slate-900 dark:text-white">
                       {licitacion.estado}
                     </Badge>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-400">Monto Estimado</p>
-                    <p className="text-base text-white">
+                    <p className="text-base text-slate-900 dark:text-white">
                       {licitacion.montoEstimado
                         ? `${licitacion.moneda || "CLP"} $${(parseFloat(licitacion.montoEstimado) / 1000000).toFixed(1)}M`
                         : "No especificado"}
@@ -209,14 +293,14 @@ export default function LicitacionDetailPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-white">Fechas Importantes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">Publicación</p>
-                  <p className="text-base text-white">
+                  <p className="text-base text-slate-900 dark:text-white">
                     {licitacion.fechaPublicacion
                       ? new Date(licitacion.fechaPublicacion).toLocaleDateString('es-CL')
                       : "-"}
@@ -224,7 +308,7 @@ export default function LicitacionDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-400">Cierre</p>
-                  <p className="text-base text-white">
+                  <p className="text-base text-slate-900 dark:text-white">
                     {licitacion.fechaCierre
                       ? new Date(licitacion.fechaCierre).toLocaleDateString('es-CL')
                       : "-"}
@@ -239,7 +323,7 @@ export default function LicitacionDetailPage() {
                 {licitacion.fechaAdjudicacion && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Adjudicación</p>
-                    <p className="text-base text-white">
+                    <p className="text-base text-slate-900 dark:text-white">
                       {new Date(licitacion.fechaAdjudicacion).toLocaleDateString('es-CL')}
                     </p>
                   </div>
@@ -251,9 +335,9 @@ export default function LicitacionDetailPage() {
           {/* Notas y documentos */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Notas */}
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <MessageSquarePlus className="h-5 w-5" />
                   Notas y Eventos
                 </CardTitle>
@@ -267,12 +351,12 @@ export default function LicitacionDetailPage() {
                     placeholder="Escribe una nueva nota..."
                     value={nuevaNota}
                     onChange={(e) => setNuevaNota(e.target.value)}
-                    className="min-h-[100px] border-white/20 bg-white/10 text-white placeholder:text-slate-400"
+                    className="min-h-[100px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-400"
                   />
                   <Button
                     onClick={handleAgregarNota}
                     disabled={enviandoNota || !nuevaNota.trim()}
-                    className="w-full bg-indigo-600 text-white hover:bg-indigo-700"
+                    className="w-full bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                   >
                     <Send className="mr-2 h-4 w-4" />
                     {enviandoNota ? "Guardando..." : "Agregar Nota"}
@@ -284,8 +368,8 @@ export default function LicitacionDetailPage() {
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {licitacion.notas && licitacion.notas.length > 0 ? (
                     licitacion.notas.map((nota: any) => (
-                      <div key={nota.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                        <p className="text-sm text-white">{nota.contenido}</p>
+                      <div key={nota.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 p-3">
+                        <p className="text-sm text-slate-900 dark:text-white">{nota.contenido}</p>
                         <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
                           <span>{nota.autor?.name || "Usuario"}</span>
                           <span>{new Date(nota.createdAt).toLocaleString('es-CL')}</span>
@@ -293,7 +377,7 @@ export default function LicitacionDetailPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                       <FileText className="mb-2 h-8 w-8 text-slate-400" />
                       <p className="text-sm text-slate-400">
                         Aún no hay notas. Agrega la primera nota arriba.
@@ -305,63 +389,116 @@ export default function LicitacionDetailPage() {
             </Card>
 
             {/* Documentos */}
-            <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <FileText className="h-5 w-5" />
-                  Documentos
+                  Documentos PDF
                 </CardTitle>
-                <CardDescription className="text-slate-300">
-                  Archivos relacionados con esta licitación
+                <CardDescription className="text-slate-600 dark:text-slate-300">
+                  Sube archivos PDF relacionados con esta licitación
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {licitacion.documentos && licitacion.documentos.length > 0 ? (
-                  licitacion.documentos.map((doc: any) => (
-                    <div key={doc.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                      <p className="text-sm font-medium text-white">{doc.nombre}</p>
-                      {doc.descripcion && (
-                        <p className="text-xs text-slate-400">{doc.descripcion}</p>
-                      )}
-                      <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                        <span>{doc.tipoArchivo}</span>
-                        <span>{new Date(doc.createdAt).toLocaleDateString('es-CL')}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/5 px-6 py-8 text-center">
-                    <FileText className="mb-2 h-8 w-8 text-slate-400" />
-                    <p className="text-sm text-slate-400">
-                      No hay documentos adjuntos.
-                    </p>
+              <CardContent className="space-y-4">
+                {/* Upload Section */}
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Descripción del documento (opcional)"
+                    value={descripcionDoc}
+                    onChange={(e) => setDescripcionDoc(e.target.value)}
+                    className="border-slate-300 dark:border-white/20 bg-white dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-400"
+                  />
+                  <div className="flex gap-2">
+                    <Input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleSubirDocumento}
+                      disabled={subiendoDoc}
+                      className="border-slate-300 dark:border-white/20 bg-white dark:bg-white/10 text-slate-900 dark:text-white file:mr-2 file:rounded file:border-0 file:bg-indigo-600 file:px-3 file:py-1 file:text-sm file:text-white hover:file:bg-indigo-700"
+                    />
                   </div>
-                )}
+                  {subiendoDoc && (
+                    <p className="text-sm text-indigo-600 dark:text-indigo-400">Subiendo documento...</p>
+                  )}
+                </div>
+
+                <Separator className="bg-slate-200 dark:bg-white/10" />
+
+                {/* Documents List */}
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {docsData?.documentos && docsData.documentos.length > 0 ? (
+                    docsData.documentos.map((doc: any) => (
+                      <div key={doc.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{doc.nombre}</p>
+                            {doc.descripcion && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400">{doc.descripcion}</p>
+                            )}
+                            <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                              <span>{(doc.tamano / 1024 / 1024).toFixed(2)} MB</span>
+                              <span>{new Date(doc.createdAt).toLocaleDateString('es-CL')}</span>
+                              <span>{doc.uploadedBy?.name || "Usuario"}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              asChild
+                              className="border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"
+                            >
+                              <a href={doc.rutaArchivo} download target="_blank" rel="noopener noreferrer">
+                                <Download className="h-3 w-3" />
+                              </a>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEliminarDocumento(doc.id)}
+                              className="border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/5 px-6 py-8 text-center">
+                      <FileText className="mb-2 h-8 w-8 text-slate-400" />
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        No hay documentos adjuntos. Sube el primer PDF arriba.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Información adicional */}
-          <Card className="border-white/10 bg-white/5 text-white shadow-xl backdrop-blur">
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="text-white">Información del Sistema</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <div>
                 <p className="text-sm font-medium text-slate-400">Responsable</p>
-                <p className="text-base text-white">
+                <p className="text-base text-slate-900 dark:text-white">
                   {licitacion.responsable?.name || "No asignado"}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-400">Creado por</p>
-                <p className="text-base text-white">
+                <p className="text-base text-slate-900 dark:text-white">
                   {licitacion.createdBy?.name || "Desconocido"}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-400">Fecha de creación</p>
-                <p className="text-base text-white">
+                <p className="text-base text-slate-900 dark:text-white">
                   {new Date(licitacion.createdAt).toLocaleDateString('es-CL')}
                 </p>
               </div>
