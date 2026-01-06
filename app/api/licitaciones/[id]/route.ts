@@ -66,6 +66,11 @@ export async function GET(
             createdAt: "desc",
           },
         },
+        items: {
+          orderBy: {
+            correlativo: "asc",
+          },
+        },
       },
     });
 

@@ -95,10 +95,11 @@ model Ticket {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner        User          @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  assignedTo   User?         @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  documentos   Documento[]
-  notas        Nota[]
+  owner          User             @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assignedTo     User?            @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  documentos     Documento[]
+  notas          Nota[]
+  soporteTecnico SoporteTecnico[]
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
@@ -131,11 +132,90 @@ model Licitacion {
   deletedById       String?  @map("deleted_by_id") @db.NVarChar(100)
   motivoEliminacion String?  @map("motivo_eliminacion") @db.NVarChar(MAX)
 
-  responsable User?       @relation("LicitacionResponsable", fields: [responsableId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdBy   User        @relation("LicitacionCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  deletedBy   User?       @relation("LicitacionDeletedBy", fields: [deletedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  documentos  Documento[]
-  notas       Nota[]
+  // Campos adicionales de la API de Mercado Público
+  // Información básica
+  codigoEstado            Int?      @map("codigo_estado")
+  estadoTexto             String?   @map("estado_texto") @db.NVarChar(100)
+  diasCierreLicitacion    Int?      @map("dias_cierre_licitacion")
+  codigoTipo              Int?      @map("codigo_tipo")
+  tipoLicitacion          String?   @map("tipo_licitacion") @db.NVarChar(10) // LE, LP, LQ, etc
+  tipoConvocatoria        String?   @map("tipo_convocatoria") @db.NVarChar(10)
+  etapas                  Int?
+  estadoEtapas            String?   @map("estado_etapas") @db.NVarChar(10)
+  tomaRazon               String?   @map("toma_razon") @db.NVarChar(10)
+  estadoPublicidadOfertas Int?      @map("estado_publicidad_ofertas")
+  contrato                String?   @db.NVarChar(10)
+  obras                   String?   @db.NVarChar(10)
+  cantidadReclamos        Int?      @map("cantidad_reclamos")
+
+  // Información del Comprador
+  codigoOrganismo     String? @map("codigo_organismo") @db.NVarChar(50)
+  rutUnidad           String? @map("rut_unidad") @db.NVarChar(50)
+  codigoUnidad        String? @map("codigo_unidad") @db.NVarChar(50)
+  nombreUnidad        String? @map("nombre_unidad") @db.NVarChar(500)
+  direccionUnidad     String? @map("direccion_unidad") @db.NVarChar(500)
+  comunaUnidad        String? @map("comuna_unidad") @db.NVarChar(100)
+  regionUnidad        String? @map("region_unidad") @db.NVarChar(100)
+  rutUsuario          String? @map("rut_usuario") @db.NVarChar(50)
+  codigoUsuario       String? @map("codigo_usuario") @db.NVarChar(50)
+  nombreUsuario       String? @map("nombre_usuario") @db.NVarChar(255)
+  cargoUsuario        String? @map("cargo_usuario") @db.NVarChar(255)
+
+  // Fechas adicionales
+  fechaCreacion               DateTime? @map("fecha_creacion")
+  fechaInicio                 DateTime? @map("fecha_inicio")
+  fechaFinal                  DateTime? @map("fecha_final")
+  fechaPubRespuestas          DateTime? @map("fecha_pub_respuestas")
+  fechaActoAperturaTecnica    DateTime? @map("fecha_acto_apertura_tecnica")
+  fechaActoAperturaEconomica  DateTime? @map("fecha_acto_apertura_economica")
+  fechaEstimadaAdjudicacion   DateTime? @map("fecha_estimada_adjudicacion")
+  fechaSoporteFisico          DateTime? @map("fecha_soporte_fisico")
+  fechaTiempoEvaluacion       DateTime? @map("fecha_tiempo_evaluacion")
+  fechaEstimadaFirma          DateTime? @map("fecha_estimada_firma")
+  fechaVisitaTerreno          DateTime? @map("fecha_visita_terreno")
+  fechaEntregaAntecedentes    DateTime? @map("fecha_entrega_antecedentes")
+
+  // Información financiera y contractual
+  estimacion                      Int?      @map("estimacion")
+  fuenteFinanciamiento            String?   @map("fuente_financiamiento") @db.NVarChar(255)
+  visibilidadMonto                Int?      @map("visibilidad_monto")
+  tiempo                          String?   @db.NVarChar(50)
+  unidadTiempo                    String?   @map("unidad_tiempo") @db.NVarChar(10)
+  modalidad                       Int?
+  tipoPago                        String?   @map("tipo_pago") @db.NVarChar(10)
+  nombreResponsablePago           String?   @map("nombre_responsable_pago") @db.NVarChar(255)
+  emailResponsablePago            String?   @map("email_responsable_pago") @db.NVarChar(255)
+  nombreResponsableContrato       String?   @map("nombre_responsable_contrato") @db.NVarChar(255)
+  emailResponsableContrato        String?   @map("email_responsable_contrato") @db.NVarChar(255)
+  fonoResponsableContrato         String?   @map("fono_responsable_contrato") @db.NVarChar(50)
+  unidadTiempoDuracionContrato    Int?      @map("unidad_tiempo_duracion_contrato")
+  tiempoDuracionContrato          String?   @map("tiempo_duracion_contrato") @db.NVarChar(50)
+  tipoDuracionContrato            String?   @map("tipo_duracion_contrato") @db.NVarChar(10)
+
+  // Condiciones y requisitos
+  prohibicionContratacion         String?   @map("prohibicion_contratacion") @db.NVarChar(MAX)
+  subContratacion                 String?   @map("sub_contratacion") @db.NVarChar(10)
+  justificacionMontoEstimado      String?   @map("justificacion_monto_estimado") @db.NVarChar(MAX)
+  observacionContract             String?   @map("observacion_contract") @db.NVarChar(MAX)
+  extensionPlazo                  Int?      @map("extension_plazo")
+  esBaseTipo                      Int?      @map("es_base_tipo")
+  unidadTiempoContratoLicitacion  String?   @map("unidad_tiempo_contrato_licitacion") @db.NVarChar(10)
+  valorTiempoRenovacion           String?   @map("valor_tiempo_renovacion") @db.NVarChar(50)
+  periodoTiempoRenovacion         String?   @map("periodo_tiempo_renovacion") @db.NVarChar(10)
+  esRenovable                     Int?      @map("es_renovable")
+  codigoBIP                       String?   @map("codigo_bip") @db.NVarChar(100)
+
+  // Direcciones
+  direccionVisita   String? @map("direccion_visita") @db.NVarChar(500)
+  direccionEntrega  String? @map("direccion_entrega") @db.NVarChar(500)
+
+  responsable     User?                  @relation("LicitacionResponsable", fields: [responsableId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdBy       User                   @relation("LicitacionCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deletedBy       User?                  @relation("LicitacionDeletedBy", fields: [deletedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  documentos      Documento[]
+  notas           Nota[]
+  items           LicitacionItem[]
+  soporteTecnico  SoporteTecnico[]
 
   @@map("licitaciones")
   @@index([estado], map: "idx_licitacion_estado")
@@ -143,6 +223,9 @@ model Licitacion {
   @@index([responsableId], map: "idx_licitacion_responsable")
   @@index([deletedAt], map: "idx_licitacion_deleted_at")
   @@index([folio], map: "idx_licitacion_folio")
+  @@index([regionUnidad], map: "idx_licitacion_region")
+  @@index([comunaUnidad], map: "idx_licitacion_comuna")
+  @@index([codigoOrganismo], map: "idx_licitacion_organismo")
 }
 
 model Cita {
@@ -160,10 +243,11 @@ model Cita {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizador   User                 @relation(fields: [organizadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  participantes CitaParticipante[]
-  documentos    Documento[]
-  notas         Nota[]
+  organizador    User                 @relation(fields: [organizadorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  participantes  CitaParticipante[]
+  documentos     Documento[]
+  notas          Nota[]
+  soporteTecnico SoporteTecnico[]
 
   @@map("citas")
   @@index([fechaInicio], map: "idx_cita_fecha_inicio")
@@ -268,4 +352,65 @@ model AuditoriaLog {
   @@index([userId], map: "idx_auditoria_user")
   @@index([entidad, entidadId], map: "idx_auditoria_entidad")
   @@index([createdAt], map: "idx_auditoria_fecha")
+}
+
+model LicitacionItem {
+  id              String      @id @default(cuid()) @db.NVarChar(100)
+  licitacionId    String      @map("licitacion_id") @db.NVarChar(100)
+  correlativo     Int
+  codigoProducto  String?     @map("codigo_producto") @db.NVarChar(50)
+  codigoCategoria String?     @map("codigo_categoria") @db.NVarChar(50)
+  categoria       String?     @db.NVarChar(MAX)
+  nombreProducto  String?     @map("nombre_producto") @db.NVarChar(500)
+  descripcion     String?     @db.NVarChar(MAX)
+  unidadMedida    String?     @map("unidad_medida") @db.NVarChar(50)
+  cantidad        Decimal?    @db.Decimal(18, 2)
+  createdAt       DateTime    @default(now())
+
+  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+
+  @@map("licitaciones_items")
+  @@index([licitacionId], map: "idx_licitacion_item_licitacion")
+  @@index([codigoProducto], map: "idx_licitacion_item_producto")
+}
+
+model SoporteTecnico {
+  id                    String    @id @default(cuid()) @db.NVarChar(100)
+  licitacionId          String?   @map("licitacion_id") @db.NVarChar(100)
+  ticketId              String?   @map("ticket_id") @db.NVarChar(100)
+  citaId                String?   @map("cita_id") @db.NVarChar(100)
+
+  // Información del contacto
+  nombreContacto        String    @map("nombre_contacto") @db.NVarChar(255)
+  cargoContacto         String?   @map("cargo_contacto") @db.NVarChar(255)
+  emailContacto         String?   @map("email_contacto") @db.NVarChar(255)
+  telefonoContacto      String?   @map("telefono_contacto") @db.NVarChar(50)
+  empresaContacto       String?   @map("empresa_contacto") @db.NVarChar(255)
+
+  // Información del soporte
+  tipoSoporte           String    @map("tipo_soporte") @db.NVarChar(100) // TECNICO, COMERCIAL, ADMINISTRATIVO, LEGAL, OTRO
+  descripcion           String?   @db.NVarChar(MAX)
+  observaciones         String?   @db.NVarChar(MAX)
+  estado                String    @default("ACTIVO") @db.NVarChar(50) // ACTIVO, INACTIVO, ARCHIVADO
+  prioridad             String    @default("MEDIA") @db.NVarChar(50) // ALTA, MEDIA, BAJA
+
+  // Información de seguimiento
+  fechaContacto         DateTime? @map("fecha_contacto")
+  proximoSeguimiento    DateTime? @map("proximo_seguimiento")
+
+  // Metadata
+  createdById           String    @map("created_by_id") @db.NVarChar(100)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  licitacion Licitacion? @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  ticket     Ticket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  cita       Cita?       @relation(fields: [citaId], references: [id], onDelete: Cascade)
+
+  @@map("soporte_tecnico")
+  @@index([licitacionId], map: "idx_soporte_licitacion")
+  @@index([ticketId], map: "idx_soporte_ticket")
+  @@index([citaId], map: "idx_soporte_cita")
+  @@index([estado], map: "idx_soporte_estado")
+  @@index([tipoSoporte], map: "idx_soporte_tipo")
 }
