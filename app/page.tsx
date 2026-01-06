@@ -89,7 +89,7 @@ export default async function Dashboard() {
         <SidebarTrigger />
         <div className="flex flex-col">
           <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Sistema de Licitaciones</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-200">Resumen ejecutivo y accesos rápidos</p>
+          <p className="text-sm text-slate-800 dark:text-slate-200">Resumen ejecutivo y accesos rápidos</p>
         </div>
         <div className="ml-auto flex gap-2">
           <Button
@@ -130,7 +130,7 @@ export default async function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-semibold">{stat.value}</div>
-                <p className="text-xs text-slate-600 dark:text-slate-200">{stat.description}</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200">{stat.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -163,7 +163,7 @@ export default async function Dashboard() {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{priorityLabels[ticket.priority]}</Badge>
                     <Badge variant="secondary">{statusLabels[ticket.status]}</Badge>
-                    <span className="text-xs text-slate-600 dark:text-slate-300">{formatDate(ticket.updatedAt)}</span>
+                    <span className="text-xs text-slate-800 dark:text-slate-300">{formatDate(ticket.updatedAt)}</span>
                   </div>
                 </div>
               ))}
@@ -202,7 +202,7 @@ export default async function Dashboard() {
                       <p className="text-sm font-semibold text-slate-900 dark:text-white">{bid.title}</p>
                       <Badge variant={bid.daysLeft <= 5 ? "destructive" : "default"}>{bid.daysLeft} días</Badge>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">{bid.institution}</p>
+                    <p className="text-xs text-slate-800 dark:text-slate-300">{bid.institution}</p>
                   </div>
                 ))
               )}

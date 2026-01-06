@@ -33,7 +33,7 @@ export default function NotificacionesPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Notificaciones</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Centro de alertas</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Configura qué eventos quieres recibir.</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">Configura qué eventos quieres recibir.</p>
           </div>
         </div>
       </header>
@@ -46,7 +46,7 @@ export default function NotificacionesPage() {
                 <Bell className="h-5 w-5" />
                 Notificaciones recientes
               </CardTitle>
-              <CardDescription className="text-slate-200">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Centro de actividad. Conecta tu backend para ver las alertas.
               </CardDescription>
             </CardHeader>
@@ -54,7 +54,7 @@ export default function NotificacionesPage() {
             {notificaciones.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                 <Sparkles className="h-6 w-6 text-indigo-300" />
-                <p className="text-sm text-slate-600 dark:text-slate-200">Sin notificaciones. Llegarán aquí cuando se activen.</p>
+                <p className="text-sm text-slate-800 dark:text-slate-200">Sin notificaciones. Llegarán aquí cuando se activen.</p>
                 <Badge variant="secondary" className="bg-indigo-500/20 text-indigo-100 border border-slate-300 dark:border-white/20">
                   Centro limpio
                 </Badge>
@@ -63,7 +63,7 @@ export default function NotificacionesPage() {
               notificaciones.map((n) => (
                 <div key={n.id} className="rounded-lg border border-white/15 bg-white/90 dark:bg-white/10 p-4 shadow-sm backdrop-blur">
                   <p className="font-semibold text-slate-900 dark:text-white">{n.titulo}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-200">{n.mensaje}</p>
+                    <p className="text-sm text-slate-800 dark:text-slate-200">{n.mensaje}</p>
                   </div>
                 ))
               )}
@@ -76,7 +76,7 @@ export default function NotificacionesPage() {
                 <Settings className="h-5 w-5" />
                 Preferencias
               </CardTitle>
-              <CardDescription className="text-slate-200">Personaliza canales y tipos de alerta.</CardDescription>
+              <CardDescription className="text-slate-700 dark:text-slate-200">Personaliza canales y tipos de alerta.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-3 rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4">

@@ -35,7 +35,7 @@ export default function ReportesPage() {
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Reportes</p>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Reportes y análisis</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-200">Genera reportes personalizados y explora plantillas.</p>
+          <p className="text-sm text-slate-800 dark:text-slate-200">Genera reportes personalizados y explora plantillas.</p>
         </div>
       </header>
 
@@ -44,7 +44,7 @@ export default function ReportesPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Generar nuevo reporte</CardTitle>
-              <CardDescription className="text-slate-200">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Configura los parámetros para exportar un reporte.
               </CardDescription>
             </CardHeader>
@@ -99,7 +99,7 @@ export default function ReportesPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Plantillas de reporte</CardTitle>
-              <CardDescription className="text-slate-200">Explora los tipos de reportes disponibles.</CardDescription>
+              <CardDescription className="text-slate-700 dark:text-slate-200">Explora los tipos de reportes disponibles.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               {reportesDisponibles.map((reporte) => (
@@ -112,7 +112,7 @@ export default function ReportesPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{reporte.nombre}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-200">{reporte.descripcion}</p>
+                    <p className="text-sm text-slate-800 dark:text-slate-200">{reporte.descripcion}</p>
                   </div>
                   <Badge variant="secondary">{reporte.categoria}</Badge>
                 </div>
@@ -123,12 +123,12 @@ export default function ReportesPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle>Reportes recientes</CardTitle>
-              <CardDescription className="text-slate-200">Historial de descargas</CardDescription>
+              <CardDescription className="text-slate-700 dark:text-slate-200">Historial de descargas</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
                 <Sparkles className="h-6 w-6 text-indigo-300" />
-                <p className="text-sm text-slate-600 dark:text-slate-200">
+                <p className="text-sm text-slate-800 dark:text-slate-200">
                   Aún no hay reportes generados. Usa el generador para crear el primero.
                 </p>
               </div>

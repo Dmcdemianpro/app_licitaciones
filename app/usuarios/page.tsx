@@ -118,7 +118,7 @@ export default function UsuariosPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Administración</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Usuarios y roles</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">
+            <p className="text-sm text-slate-800 dark:text-slate-200">
               Administra accesos y permisos del sistema
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function UsuariosPage() {
                   <Shield className="h-12 w-12 text-indigo-500 dark:text-indigo-300" />
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No hay usuarios registrados</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                    <p className="text-sm text-slate-800 dark:text-slate-300 mb-4">
                       Crea el primer usuario para comenzar
                     </p>
                   </div>
@@ -250,27 +250,27 @@ export default function UsuariosPage() {
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 min-w-0">
+                            <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300 min-w-0">
                               <Mail className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                               <span className="truncate">{user.email}</span>
                             </div>
 
                             {user.telefono && (
-                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                              <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300">
                                 <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                                 <span>{user.telefono}</span>
                               </div>
                             )}
 
                             {user.cargo && (
-                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 min-w-0">
+                              <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300 min-w-0">
                                 <Briefcase className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                                 <span className="truncate">{user.cargo}</span>
                               </div>
                             )}
 
                             {user.departamento && (
-                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 min-w-0">
+                              <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300 min-w-0">
                                 <Building2 className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                                 <span className="truncate">{user.departamento}</span>
                               </div>

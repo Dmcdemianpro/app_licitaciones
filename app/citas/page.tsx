@@ -141,7 +141,7 @@ export default function CitasPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas y eventos</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Agenda del equipo</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Programa y registra tus reuniones.</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">Programa y registra tus reuniones.</p>
           </div>
         </div>
         <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
@@ -197,7 +197,7 @@ export default function CitasPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="text-lg">Filtros</CardTitle>
-              <CardDescription className="text-slate-300">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Filtra las citas por estado
               </CardDescription>
             </CardHeader>
@@ -221,19 +221,19 @@ export default function CitasPage() {
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="text-lg">Lista de Citas</CardTitle>
-              <CardDescription className="text-slate-300">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Todas las citas registradas en el sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               {error && <p className="text-sm text-red-300">No se pudo obtener citas.</p>}
-              {isLoading && <p className="text-sm text-slate-600 dark:text-slate-300">Cargando citas...</p>}
+              {isLoading && <p className="text-sm text-slate-800 dark:text-slate-300">Cargando citas...</p>}
               {!isLoading && citas.length === 0 && (
                 <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-10 text-center">
                   <Calendar className="h-10 w-10 text-indigo-300" />
                   <div>
                     <p className="text-base font-semibold text-slate-900 dark:text-white">Sin citas registradas</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                    <p className="text-sm text-slate-800 dark:text-slate-300 mt-2">
                       Crea tu primera cita para comenzar a gestionar tu agenda
                     </p>
                   </div>
@@ -313,16 +313,16 @@ export default function CitasPage() {
                             </div>
 
                             {cita.descripcion && (
-                              <p className="text-sm text-slate-600 dark:text-slate-300">{cita.descripcion}</p>
+                              <p className="text-sm text-slate-800 dark:text-slate-300">{cita.descripcion}</p>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                              <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300">
                                 <Calendar className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                 <span>{formatDate(cita.fechaInicio)}</span>
                               </div>
 
-                              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                              <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300">
                                 <Clock className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                 <span>
                                   {formatTime(cita.fechaInicio)} - {formatTime(cita.fechaFin)}
@@ -330,14 +330,14 @@ export default function CitasPage() {
                               </div>
 
                               {cita.ubicacion && (
-                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300">
                                   <MapPin className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                   <span className="truncate">{cita.ubicacion}</span>
                                 </div>
                               )}
 
                               {cita.urlReunion && (
-                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                <div className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-300">
                                   <Video className="h-4 w-4 text-slate-500 flex-shrink-0" />
                                   <a
                                     href={cita.urlReunion}

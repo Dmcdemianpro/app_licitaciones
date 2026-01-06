@@ -72,7 +72,7 @@ export default function ConfiguracionPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Configuración</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Preferencias del sistema</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Ajustes generales y notificaciones.</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">Ajustes generales y notificaciones.</p>
           </div>
         </div>
       </header>
@@ -85,7 +85,7 @@ export default function ConfiguracionPage() {
                 <Cog className="h-5 w-5" />
                 Preferencias generales
               </CardTitle>
-              <CardDescription className="text-slate-200">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 Ajusta idioma de interfaz, canales de notificación y correo de soporte.
               </CardDescription>
             </CardHeader>
@@ -113,7 +113,7 @@ export default function ConfiguracionPage() {
                   <Label className="text-slate-200">Correo de soporte</Label>
                   <Input
                     type="email"
-                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
                     value={prefs.soporteEmail}
                     onChange={(e) => setPrefs((prev) => ({ ...prev, soporteEmail: e.target.value }))}
                   />
@@ -124,7 +124,7 @@ export default function ConfiguracionPage() {
                 <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">Email</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">Alertas en tu correo</p>
+                    <p className="text-xs text-slate-800 dark:text-slate-300">Alertas en tu correo</p>
                   </div>
                   <Switch
                     checked={prefs.emailNotifications}
@@ -134,7 +134,7 @@ export default function ConfiguracionPage() {
                 <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">Push</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">Notificaciones en navegador</p>
+                    <p className="text-xs text-slate-800 dark:text-slate-300">Notificaciones en navegador</p>
                   </div>
                   <Switch
                     checked={prefs.pushNotifications}
@@ -144,7 +144,7 @@ export default function ConfiguracionPage() {
                 <div className="flex items-center justify-between rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4">
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">Resumen semanal</p>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">Envía un resumen cada semana</p>
+                    <p className="text-xs text-slate-800 dark:text-slate-300">Envía un resumen cada semana</p>
                   </div>
                   <Switch
                     checked={prefs.weeklySummary}
@@ -178,11 +178,11 @@ export default function ConfiguracionPage() {
                 <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-200" />
                 Seguridad (informativo)
               </CardTitle>
-              <CardDescription className="text-slate-200">
+              <CardDescription className="text-slate-700 dark:text-slate-200">
                 La gestión de contraseñas y roles se realiza desde la sección de Usuarios.
               </CardDescription>
             </CardHeader>
-            <CardContent className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-sm text-slate-600 dark:text-slate-200">
+            <CardContent className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-sm text-slate-800 dark:text-slate-200">
               Para habilitar MFA u otros parámetros de seguridad, conecta tu backend y expón las opciones aquí.
             </CardContent>
           </Card>
