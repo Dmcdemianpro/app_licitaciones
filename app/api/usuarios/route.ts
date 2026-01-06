@@ -57,17 +57,28 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.role || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  // PERMISOS: Solo SUPERVISOR y ADMIN pueden crear usuarios
+  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
+    return NextResponse.json(
+      { error: "No tienes permisos para crear usuarios. Se requiere rol SUPERVISOR o ADMIN." },
+      { status: 403 }
+    );
   }
 
   try {
     const body = await req.json();
-    const { email, name, password, role = "USER" } = body as {
+    const { email, name, password, role = "USER", telefono, departamento, cargo } = body as {
       email?: string;
       name?: string;
       password?: string;
       role?: string;
+      telefono?: string;
+      departamento?: string;
+      cargo?: string;
     };
 
     if (!email || !password) {
@@ -86,8 +97,11 @@ export async function POST(req: Request) {
         name,
         role,
         hashedPassword,
+        telefono,
+        departamento,
+        cargo,
       },
-      select: { id: true, email: true, name: true, role: true, createdAt: true },
+      select: { id: true, email: true, name: true, role: true, telefono: true, departamento: true, cargo: true, createdAt: true },
     });
 
     return NextResponse.json(user, { status: 201 });

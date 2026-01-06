@@ -172,6 +172,14 @@ export async function DELETE(
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    // PERMISOS: Solo ADMIN puede eliminar licitaciones
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "No tienes permisos para eliminar licitaciones. Solo el rol ADMIN puede hacerlo." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const { searchParams } = new URL(req.url);
     const motivo = searchParams.get("motivo");

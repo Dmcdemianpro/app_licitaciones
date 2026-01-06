@@ -56,6 +56,10 @@ export default function LicitacionDetailPage() {
 
   const licitacion = data?.licitacion;
 
+  // Fetch session to check permissions
+  const { data: sessionData } = useSWR('/api/auth/session', fetcher);
+  const isAdmin = sessionData?.user?.role === 'ADMIN';
+
   // Fetch documents separately for real-time updates
   const { data: docsData, mutate: mutateDocs } = useSWR(
     `/api/licitaciones/${id}/documentos`,
@@ -305,7 +309,7 @@ export default function LicitacionDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {!licitacion.deletedAt && (
+          {!licitacion.deletedAt && isAdmin && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">
@@ -613,14 +617,16 @@ export default function LicitacionDetailPage() {
                                 <Download className="h-3 w-3" />
                               </a>
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEliminarDocumento(doc.id)}
-                              className="border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEliminarDocumento(doc.id)}
+                                className="border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>

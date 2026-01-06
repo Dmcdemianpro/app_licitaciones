@@ -101,6 +101,7 @@ export default function UsuariosPage() {
   };
 
   const isAdmin = session?.user?.role === 'ADMIN';
+  const canManageUsers = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERVISOR';
 
   if (loading) {
     return (
@@ -123,12 +124,14 @@ export default function UsuariosPage() {
             </p>
           </div>
         </div>
-        <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
-          <Link href="/usuarios/nuevo">
-            <Plus className="mr-2 h-4 w-4" />
-            Crear Usuario
-          </Link>
-        </Button>
+        {canManageUsers && (
+          <Button variant="default" asChild className="bg-indigo-600 text-white hover:bg-indigo-700">
+            <Link href="/usuarios/nuevo">
+              <Plus className="mr-2 h-4 w-4" />
+              Crear Usuario
+            </Link>
+          </Button>
+        )}
       </header>
 
       <div className="flex-1 bg-gradient-to-b from-purple-50/50 via-transparent to-transparent dark:from-white/5 dark:via-white/0 dark:to-white/0 p-6">
@@ -289,11 +292,13 @@ export default function UsuariosPage() {
                       </div>
 
                       <div className="flex gap-2 flex-shrink-0">
-                        <Button variant="outline" size="sm" asChild className="border-white/20 hover:bg-white/10">
-                          <Link href={`/usuarios/${user.id}`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        {canManageUsers && (
+                          <Button variant="outline" size="sm" asChild className="border-white/20 hover:bg-white/10">
+                            <Link href={`/usuarios/${user.id}`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        )}
                         {isAdmin && (
                           <Button
                             variant="outline"

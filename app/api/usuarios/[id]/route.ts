@@ -57,6 +57,14 @@ export async function PATCH(
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    // PERMISOS: Solo SUPERVISOR y ADMIN pueden editar usuarios
+    if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
+      return NextResponse.json(
+        { error: "No tienes permisos para editar usuarios. Se requiere rol SUPERVISOR o ADMIN." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const body = await req.json();
 

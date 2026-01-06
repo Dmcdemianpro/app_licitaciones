@@ -113,6 +113,14 @@ export async function DELETE(
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
+    // PERMISOS: Solo ADMIN puede eliminar citas
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "No tienes permisos para eliminar citas. Solo el rol ADMIN puede hacerlo." },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     // Primero eliminar los participantes asociados
