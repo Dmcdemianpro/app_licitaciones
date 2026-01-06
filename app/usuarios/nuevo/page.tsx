@@ -14,7 +14,15 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function NuevoUsuarioPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "USER" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "USER",
+    telefono: "",
+    departamento: "",
+    cargo: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +56,7 @@ export default function NuevoUsuarioPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Usuarios</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Crear usuario</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Completa los datos para registrar un nuevo usuario.</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">Completa los datos para registrar un nuevo usuario.</p>
           </div>
         </div>
       </header>
@@ -60,57 +68,95 @@ export default function NuevoUsuarioPage() {
               <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-200" />
               Datos del usuario
             </CardTitle>
-            <CardDescription className="text-slate-200">
-              Email y contraseña son obligatorios. El rol se define como ADMIN o USER.
+            <CardDescription className="text-slate-700 dark:text-slate-200">
+              Email y contraseña son obligatorios. Los demás campos son opcionales.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-slate-200">Nombre</Label>
-                <Input
-                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
-                  value={form.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="Nombre completo"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-200">Email *</Label>
-                <Input
-                  required
-                  type="email"
-                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
-                  value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  placeholder="usuario@correo.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-200">Contraseña *</Label>
-                <Input
-                  required
-                  type="password"
-                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
-                  value={form.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-200">Rol</Label>
-                <Select value={form.role} onValueChange={(v) => handleChange("role", v)}>
-                  <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
-                    <SelectValue placeholder="Selecciona un rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USER">USER</SelectItem>
-                    <SelectItem value="ADMIN">ADMIN</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Nombre</Label>
+                  <Input
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                    value={form.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    placeholder="Nombre completo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Email *</Label>
+                  <Input
+                    required
+                    type="email"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                    value={form.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    placeholder="usuario@correo.com"
+                  />
+                </div>
               </div>
 
-              {error && <p className="text-sm text-red-300">{error}</p>}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Contraseña *</Label>
+                  <Input
+                    required
+                    type="password"
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                    value={form.password}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Rol</Label>
+                  <Select value={form.role} onValueChange={(v) => handleChange("role", v)}>
+                    <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="Selecciona un rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USER">Usuario</SelectItem>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="MANAGER">Manager</SelectItem>
+                      <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Teléfono</Label>
+                  <Input
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                    value={form.telefono}
+                    onChange={(e) => handleChange("telefono", e.target.value)}
+                    placeholder="+56 9 1234 5678"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-800 dark:text-slate-200">Departamento</Label>
+                  <Input
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                    value={form.departamento}
+                    onChange={(e) => handleChange("departamento", e.target.value)}
+                    placeholder="TIC"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-slate-800 dark:text-slate-200">Cargo</Label>
+                <Input
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-300"
+                  value={form.cargo}
+                  onChange={(e) => handleChange("cargo", e.target.value)}
+                  placeholder="Encargado Departamentales"
+                />
+              </div>
+
+              {error && <p className="text-sm text-red-600 dark:text-red-300">{error}</p>}
 
               <div className="flex gap-2">
                 <Button
