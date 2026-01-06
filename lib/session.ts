@@ -4,7 +4,7 @@
 
 import { auth } from './auth'
 import { AuthenticationError, AuthorizationError } from './errors'
-import { hasPermission, Action, canAccessResource } from './permissions'
+import { hasPermission, type Permission } from './permissions'
 import type { UserRole } from './constants'
 
 export interface SessionUser {
@@ -44,10 +44,10 @@ export async function requireSession(): Promise<SessionUser> {
 /**
  * Verifica que el usuario tenga permiso para realizar una acción
  */
-export async function requirePermission(action: Action) {
+export async function requirePermission(permission: Permission) {
   const user = await requireSession()
 
-  if (!hasPermission(user.role, action)) {
+  if (!hasPermission(user.role, permission)) {
     throw new AuthorizationError('No tienes permisos para realizar esta acción')
   }
 
@@ -58,12 +58,18 @@ export async function requirePermission(action: Action) {
  * Verifica que el usuario tenga permiso para acceder a un recurso específico
  */
 export async function requireResourceAccess(
-  action: Action,
+  permission: Permission,
   resourceOwnerId?: string
 ): Promise<SessionUser> {
   const user = await requireSession()
 
-  if (!canAccessResource(user.id, user.role, action, resourceOwnerId)) {
+  // Verificar permiso básico
+  if (!hasPermission(user.role, permission)) {
+    throw new AuthorizationError('No tienes permisos para acceder a este recurso')
+  }
+
+  // Si se proporciona resourceOwnerId, verificar que sea el dueño o admin
+  if (resourceOwnerId && user.id !== resourceOwnerId && user.role !== 'ADMIN') {
     throw new AuthorizationError('No tienes permisos para acceder a este recurso')
   }
 
@@ -73,10 +79,10 @@ export async function requireResourceAccess(
 /**
  * Verifica si el usuario actual tiene un permiso (sin lanzar error)
  */
-export async function checkPermission(action: Action): Promise<boolean> {
+export async function checkPermission(permission: Permission): Promise<boolean> {
   try {
     const user = await requireSession()
-    return hasPermission(user.role, action)
+    return hasPermission(user.role, permission)
   } catch {
     return false
   }
