@@ -71,6 +71,7 @@ export async function GET(
             correlativo: "asc",
           },
         },
+        adjudicacion: true,
       },
     });
 

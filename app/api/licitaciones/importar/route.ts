@@ -122,6 +122,17 @@ export async function POST(req: Request) {
     const direccionVisita = rawData.DireccionVisita || null;
     const direccionEntrega = rawData.DireccionEntrega || null;
 
+    // Información de Adjudicación (si existe)
+    const adjudicacionData = rawData.Adjudicacion || null;
+    const numeroAdjudicacion = adjudicacionData?.NumeroAdjudicacion || null;
+    const tipoAdjudicacion = adjudicacionData?.TipoAdjudicacion || null;
+    const cantidadOferentes = adjudicacionData?.CantidadOferentes || null;
+    const fechaAdjudicacionReal = adjudicacionData?.FechaAdjudicacion || null;
+    const proveedorRut = adjudicacionData?.RutProveedor || adjudicacionData?.Proveedor?.RutProveedor || null;
+    const proveedorNombre = adjudicacionData?.NombreProveedor || adjudicacionData?.Proveedor?.Nombre || null;
+    const montoAdjudicado = adjudicacionData?.MontoTotal || adjudicacionData?.MontoAdjudicado || null;
+    const estadoAdjudicacion = adjudicacionData?.EstadoAdjudicacion || null;
+
     // Crear URL externa a Mercado Público
     const urlExterna = codigoExterno
       ? `https://www.mercadopublico.cl/Procurement/Modules/RFB/DetailsAcquisition.aspx?idlicitacion=${codigoExterno}`
@@ -245,10 +256,27 @@ export async function POST(req: Request) {
             unidadMedida: item.UnidadMedida || null,
             cantidad: item.Cantidad ? parseFloat(item.Cantidad.toString()) : null,
           }))
-        }
+        },
+
+        // Crear adjudicación si existen datos
+        ...(adjudicacionData && {
+          adjudicacion: {
+            create: {
+              numeroAdjudicacion,
+              tipoAdjudicacion,
+              cantidadOferentes,
+              fechaAdjudicacion: fechaAdjudicacionReal ? new Date(fechaAdjudicacionReal) : null,
+              proveedorRut,
+              proveedorNombre,
+              montoAdjudicado: montoAdjudicado ? parseFloat(montoAdjudicado.toString()) : null,
+              estadoAdjudicacion,
+            }
+          }
+        })
       },
       include: {
         items: true,
+        adjudicacion: true,
       }
     });
 

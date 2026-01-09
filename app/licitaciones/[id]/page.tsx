@@ -662,6 +662,92 @@ export default function LicitacionDetailPage() {
             </Card>
           )}
 
+          {/* Información de Adjudicación */}
+          {licitacion.adjudicacion && (
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-white">Información de Adjudicación</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Datos del proveedor ganador y detalles de la adjudicación
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-3">
+                {licitacion.adjudicacion.proveedorNombre && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-slate-400">Proveedor Adjudicado</p>
+                    <p className="text-base font-semibold text-emerald-400">
+                      {licitacion.adjudicacion.proveedorNombre}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.proveedorRut && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">RUT Proveedor</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {licitacion.adjudicacion.proveedorRut}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.montoAdjudicado && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Monto Adjudicado</p>
+                    <p className="text-base font-bold text-emerald-400">
+                      {formatCLP(licitacion.adjudicacion.montoAdjudicado)}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.fechaAdjudicacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Fecha de Adjudicación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.adjudicacion.fechaAdjudicacion).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.cantidadOferentes !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Cantidad de Oferentes</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {licitacion.adjudicacion.cantidadOferentes}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.numeroAdjudicacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Número de Adjudicación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {licitacion.adjudicacion.numeroAdjudicacion}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.tipoAdjudicacion !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tipo de Adjudicación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      Tipo {licitacion.adjudicacion.tipoAdjudicacion}
+                    </p>
+                  </div>
+                )}
+                {licitacion.adjudicacion.estadoAdjudicacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Estado</p>
+                    <Badge variant="outline" className="mt-1">
+                      {licitacion.adjudicacion.estadoAdjudicacion}
+                    </Badge>
+                  </div>
+                )}
+                {licitacion.adjudicacion.observaciones && (
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Observaciones</p>
+                    <p className="text-base text-slate-600 dark:text-slate-300">
+                      {licitacion.adjudicacion.observaciones}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Fechas Adicionales */}
           {(licitacion.fechaEstimadaAdjudicacion || licitacion.fechaActoAperturaTecnica || licitacion.fechaActoAperturaEconomica || licitacion.fechaVisitaTerreno) && (
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
