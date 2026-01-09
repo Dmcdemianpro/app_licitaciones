@@ -150,130 +150,133 @@ export async function POST(req: Request) {
       );
     }
 
+    // Preparar objeto de datos base
+    const dataBase = {
+      // Campos básicos originales
+      codigoExterno,
+      nombre,
+      descripcion,
+      entidad,
+      tipo: "PUBLICA",
+      estado,
+      montoEstimado: montoEstimado ? parseFloat(montoEstimado.toString()) : null,
+      moneda: rawData.Moneda || "CLP",
+      fechaPublicacion: fechaPublicacion ? new Date(fechaPublicacion) : null,
+      fechaCierre: fechaCierre ? new Date(fechaCierre) : null,
+      fechaAdjudicacion: fechaAdjudicacion ? new Date(fechaAdjudicacion) : null,
+      urlExterna,
+      createdById: session.user.id,
+
+      // Información básica adicional
+      codigoEstado,
+      estadoTexto,
+      diasCierreLicitacion,
+      codigoTipo,
+      tipoLicitacion,
+      tipoConvocatoria,
+      etapas,
+      estadoEtapas,
+      tomaRazon,
+      estadoPublicidadOfertas,
+      contrato,
+      obras,
+      cantidadReclamos,
+
+      // Información del comprador
+      codigoOrganismo,
+      rutUnidad,
+      codigoUnidad,
+      nombreUnidad,
+      direccionUnidad,
+      comunaUnidad,
+      regionUnidad,
+      rutUsuario,
+      codigoUsuario,
+      nombreUsuario,
+      cargoUsuario,
+
+      // Fechas adicionales
+      fechaCreacion: fechaCreacion ? new Date(fechaCreacion) : null,
+      fechaInicio: fechaInicio ? new Date(fechaInicio) : null,
+      fechaFinal: fechaFinal ? new Date(fechaFinal) : null,
+      fechaPubRespuestas: fechaPubRespuestas ? new Date(fechaPubRespuestas) : null,
+      fechaActoAperturaTecnica: fechaActoAperturaTecnica ? new Date(fechaActoAperturaTecnica) : null,
+      fechaActoAperturaEconomica: fechaActoAperturaEconomica ? new Date(fechaActoAperturaEconomica) : null,
+      fechaEstimadaAdjudicacion: fechaEstimadaAdjudicacion ? new Date(fechaEstimadaAdjudicacion) : null,
+      fechaSoporteFisico: fechaSoporteFisico ? new Date(fechaSoporteFisico) : null,
+      fechaTiempoEvaluacion: fechaTiempoEvaluacion ? new Date(fechaTiempoEvaluacion) : null,
+      fechaEstimadaFirma: fechaEstimadaFirma ? new Date(fechaEstimadaFirma) : null,
+      fechaVisitaTerreno: fechaVisitaTerreno ? new Date(fechaVisitaTerreno) : null,
+      fechaEntregaAntecedentes: fechaEntregaAntecedentes ? new Date(fechaEntregaAntecedentes) : null,
+
+      // Información financiera y contractual
+      estimacion,
+      fuenteFinanciamiento,
+      visibilidadMonto,
+      tiempo,
+      unidadTiempo,
+      modalidad,
+      tipoPago,
+      nombreResponsablePago,
+      emailResponsablePago,
+      nombreResponsableContrato,
+      emailResponsableContrato,
+      fonoResponsableContrato,
+      unidadTiempoDuracionContrato,
+      tiempoDuracionContrato,
+      tipoDuracionContrato,
+
+      // Condiciones y requisitos
+      prohibicionContratacion,
+      subContratacion,
+      justificacionMontoEstimado,
+      observacionContract,
+      extensionPlazo,
+      esBaseTipo,
+      unidadTiempoContratoLicitacion,
+      valorTiempoRenovacion,
+      periodoTiempoRenovacion,
+      esRenovable,
+      codigoBIP,
+
+      // Direcciones
+      direccionVisita,
+      direccionEntrega,
+
+      // Crear items de la licitación si existen
+      items: {
+        create: (rawData.Items?.Listado || []).map((item: any, index: number) => ({
+          correlativo: item.Correlativo || index + 1,
+          codigoProducto: item.CodigoProducto?.toString() || null,
+          codigoCategoria: item.CodigoCategoria || null,
+          categoria: item.Categoria || null,
+          nombreProducto: item.NombreProducto || null,
+          descripcion: item.Descripcion || null,
+          unidadMedida: item.UnidadMedida || null,
+          cantidad: item.Cantidad ? parseFloat(item.Cantidad.toString()) : null,
+        }))
+      },
+    };
+
+    // Agregar adjudicación si existen datos
+    if (adjudicacionData) {
+      (dataBase as any).adjudicacion = {
+        create: {
+          numeroAdjudicacion,
+          tipoAdjudicacion,
+          cantidadOferentes,
+          fechaAdjudicacion: fechaAdjudicacionReal ? new Date(fechaAdjudicacionReal) : null,
+          proveedorRut,
+          proveedorNombre,
+          montoAdjudicado: montoAdjudicado ? parseFloat(montoAdjudicado.toString()) : null,
+          estadoAdjudicacion,
+        }
+      };
+    }
+
     // Crear licitación con todos los campos de la API
     const licitacion = await prisma.licitacion.create({
-      data: {
-        // Campos básicos originales
-        codigoExterno,
-        nombre,
-        descripcion,
-        entidad,
-        tipo: "PUBLICA",
-        estado,
-        montoEstimado: montoEstimado ? parseFloat(montoEstimado.toString()) : null,
-        moneda: rawData.Moneda || "CLP",
-        fechaPublicacion: fechaPublicacion ? new Date(fechaPublicacion) : null,
-        fechaCierre: fechaCierre ? new Date(fechaCierre) : null,
-        fechaAdjudicacion: fechaAdjudicacion ? new Date(fechaAdjudicacion) : null,
-        urlExterna,
-        createdById: session.user.id,
-
-        // Información básica adicional
-        codigoEstado,
-        estadoTexto,
-        diasCierreLicitacion,
-        codigoTipo,
-        tipoLicitacion,
-        tipoConvocatoria,
-        etapas,
-        estadoEtapas,
-        tomaRazon,
-        estadoPublicidadOfertas,
-        contrato,
-        obras,
-        cantidadReclamos,
-
-        // Información del comprador
-        codigoOrganismo,
-        rutUnidad,
-        codigoUnidad,
-        nombreUnidad,
-        direccionUnidad,
-        comunaUnidad,
-        regionUnidad,
-        rutUsuario,
-        codigoUsuario,
-        nombreUsuario,
-        cargoUsuario,
-
-        // Fechas adicionales
-        fechaCreacion: fechaCreacion ? new Date(fechaCreacion) : null,
-        fechaInicio: fechaInicio ? new Date(fechaInicio) : null,
-        fechaFinal: fechaFinal ? new Date(fechaFinal) : null,
-        fechaPubRespuestas: fechaPubRespuestas ? new Date(fechaPubRespuestas) : null,
-        fechaActoAperturaTecnica: fechaActoAperturaTecnica ? new Date(fechaActoAperturaTecnica) : null,
-        fechaActoAperturaEconomica: fechaActoAperturaEconomica ? new Date(fechaActoAperturaEconomica) : null,
-        fechaEstimadaAdjudicacion: fechaEstimadaAdjudicacion ? new Date(fechaEstimadaAdjudicacion) : null,
-        fechaSoporteFisico: fechaSoporteFisico ? new Date(fechaSoporteFisico) : null,
-        fechaTiempoEvaluacion: fechaTiempoEvaluacion ? new Date(fechaTiempoEvaluacion) : null,
-        fechaEstimadaFirma: fechaEstimadaFirma ? new Date(fechaEstimadaFirma) : null,
-        fechaVisitaTerreno: fechaVisitaTerreno ? new Date(fechaVisitaTerreno) : null,
-        fechaEntregaAntecedentes: fechaEntregaAntecedentes ? new Date(fechaEntregaAntecedentes) : null,
-
-        // Información financiera y contractual
-        estimacion,
-        fuenteFinanciamiento,
-        visibilidadMonto,
-        tiempo,
-        unidadTiempo,
-        modalidad,
-        tipoPago,
-        nombreResponsablePago,
-        emailResponsablePago,
-        nombreResponsableContrato,
-        emailResponsableContrato,
-        fonoResponsableContrato,
-        unidadTiempoDuracionContrato,
-        tiempoDuracionContrato,
-        tipoDuracionContrato,
-
-        // Condiciones y requisitos
-        prohibicionContratacion,
-        subContratacion,
-        justificacionMontoEstimado,
-        observacionContract,
-        extensionPlazo,
-        esBaseTipo,
-        unidadTiempoContratoLicitacion,
-        valorTiempoRenovacion,
-        periodoTiempoRenovacion,
-        esRenovable,
-        codigoBIP,
-
-        // Direcciones
-        direccionVisita,
-        direccionEntrega,
-
-        // Crear items de la licitación si existen
-        items: {
-          create: (rawData.Items?.Listado || []).map((item: any, index: number) => ({
-            correlativo: item.Correlativo || index + 1,
-            codigoProducto: item.CodigoProducto?.toString() || null,
-            codigoCategoria: item.CodigoCategoria || null,
-            categoria: item.Categoria || null,
-            nombreProducto: item.NombreProducto || null,
-            descripcion: item.Descripcion || null,
-            unidadMedida: item.UnidadMedida || null,
-            cantidad: item.Cantidad ? parseFloat(item.Cantidad.toString()) : null,
-          }))
-        },
-
-        // Crear adjudicación si existen datos
-        ...(adjudicacionData && {
-          adjudicacion: {
-            create: {
-              numeroAdjudicacion,
-              tipoAdjudicacion,
-              cantidadOferentes,
-              fechaAdjudicacion: fechaAdjudicacionReal ? new Date(fechaAdjudicacionReal) : null,
-              proveedorRut,
-              proveedorNombre,
-              montoAdjudicado: montoAdjudicado ? parseFloat(montoAdjudicado.toString()) : null,
-              estadoAdjudicacion,
-            }
-          }
-        })
-      },
+      data: dataBase,
       include: {
         items: true,
         adjudicacion: true,
