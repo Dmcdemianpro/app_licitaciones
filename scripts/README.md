@@ -1,8 +1,43 @@
 # Scripts de Despliegue y Migración
 
+## 🔴 Error P3019 - Provider Mismatch
+
+Si obtienes el error `P3019` sobre provider mismatch entre `mssql` y `sqlserver`, **lee primero** [SOLUCION_ERROR_P3019.md](./SOLUCION_ERROR_P3019.md) para entender el problema y la solución completa.
+
+**Solución rápida:** Usa `fresh-start-deploy.sh` para empezar desde cero.
+
+---
+
 ## 📋 Scripts Disponibles
 
-### 1. `migrate-production.sh` ⭐ (Recomendado)
+### 0. `fresh-start-deploy.sh` 🔥 (Para Error P3019)
+Script para eliminar toda la BD y empezar desde cero. **Solución definitiva al error P3019**.
+
+**Uso:**
+```bash
+cd /Proyecto/app_licitaciones
+bash scripts/fresh-start-deploy.sh
+```
+
+**Cuándo usarlo:**
+- Cuando obtienes error P3019 sobre provider mismatch
+- Cuando los metadatos de migraciones están corruptos
+- Cuando quieres empezar con BD limpia
+
+**Qué hace:**
+1. Pide confirmación (escribe 'SI' para continuar)
+2. Elimina TODAS las tablas de SQL Server (incluyendo `_prisma_migrations`)
+3. Limpia cliente de Prisma y cachés
+4. Reinstala dependencias
+5. Genera cliente nuevo
+6. Aplica migraciones desde cero
+7. Construye la aplicación
+
+**⚠️ ADVERTENCIA:** Elimina TODOS los datos. Haz backup si es necesario.
+
+---
+
+### 1. `migrate-production.sh` ⭐ (Recomendado para updates normales)
 Script principal para ejecutar migraciones en producción.
 
 **Uso:**
