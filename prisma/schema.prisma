@@ -216,6 +216,7 @@ model Licitacion {
   notas           Nota[]
   items           LicitacionItem[]
   soporteTecnico  SoporteTecnico[]
+  adjudicacion    Adjudicacion?
 
   @@map("licitaciones")
   @@index([estado], map: "idx_licitacion_estado")
@@ -374,6 +375,37 @@ model LicitacionItem {
   @@index([codigoProducto], map: "idx_licitacion_item_producto")
 }
 
+model Adjudicacion {
+  id                    String      @id @default(cuid()) @db.NVarChar(100)
+  licitacionId          String      @unique @map("licitacion_id") @db.NVarChar(100)
+
+  // Información de la adjudicación
+  numeroAdjudicacion    String?     @map("numero_adjudicacion") @db.NVarChar(50)
+  tipoAdjudicacion      Int?        @map("tipo_adjudicacion")
+  cantidadOferentes     Int?        @map("cantidad_oferentes")
+  fechaAdjudicacion     DateTime?   @map("fecha_adjudicacion")
+
+  // Información del proveedor ganador
+  proveedorRut          String?     @map("proveedor_rut") @db.NVarChar(50)
+  proveedorNombre       String?     @map("proveedor_nombre") @db.NVarChar(500)
+  montoAdjudicado       Decimal?    @map("monto_adjudicado") @db.Decimal(18, 2)
+
+  // Información adicional
+  observaciones         String?     @db.NVarChar(MAX)
+  estadoAdjudicacion    String?     @map("estado_adjudicacion") @db.NVarChar(50)
+
+  // Metadata
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  licitacion Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+
+  @@map("adjudicaciones")
+  @@index([licitacionId], map: "idx_adjudicacion_licitacion")
+  @@index([proveedorRut], map: "idx_adjudicacion_proveedor")
+  @@index([fechaAdjudicacion], map: "idx_adjudicacion_fecha")
+}
+
 model SoporteTecnico {
   id                    String    @id @default(cuid()) @db.NVarChar(100)
   licitacionId          String?   @map("licitacion_id") @db.NVarChar(100)
@@ -397,6 +429,13 @@ model SoporteTecnico {
   // Información de seguimiento
   fechaContacto         DateTime? @map("fecha_contacto")
   proximoSeguimiento    DateTime? @map("proximo_seguimiento")
+
+  // Horarios de atención
+  horarioInicio         String?   @map("horario_inicio") @db.NVarChar(10)        // Formato: "09:00"
+  horarioFin            String?   @map("horario_fin") @db.NVarChar(10)           // Formato: "18:00"
+  diasDisponibles       String?   @map("dias_disponibles") @db.NVarChar(100)     // Ejemplo: "Lunes a Viernes"
+  zonaHoraria           String?   @map("zona_horaria") @db.NVarChar(50) @default("America/Santiago")
+  observacionesHorario  String?   @map("observaciones_horario") @db.NVarChar(MAX)
 
   // Metadata
   createdById           String    @map("created_by_id") @db.NVarChar(100)

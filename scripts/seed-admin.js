@@ -25,19 +25,19 @@ async function seedAdmin() {
     // Crear usuario admin
     const admin = await prisma.user.create({
       data: {
-        email: 'admin@hec.cl',
+        email: 'dario.perez@redsalud.gob.cl',
         name: 'Administrador',
         hashedPassword: hashedPassword,
         role: 'ADMIN',
         activo: true,
-        departamento: 'Administración',
+        departamento: 'TIC',
         cargo: 'Administrador del Sistema',
       }
     });
 
     console.log('✅ Usuario administrador creado exitosamente!');
-    console.log('📧 Email: admin@hec.cl');
-    console.log('🔑 Contraseña: admin123');
+    console.log('📧 Email: dario.perez@redsalud.gob.cl');
+    console.log('🔑 Contraseña: CANal1');
     console.log('⚠️  IMPORTANTE: Cambia la contraseña después de iniciar sesión');
 
   } catch (error) {
