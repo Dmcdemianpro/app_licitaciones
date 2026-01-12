@@ -364,6 +364,9 @@ export default function LicitacionDetailPage() {
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur md:col-span-2">
               <CardHeader>
                 <CardTitle className="text-white">Información General</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Datos principales de la licitación
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -394,10 +397,54 @@ export default function LicitacionDetailPage() {
                   <div>
                     <p className="text-sm font-medium text-slate-400">Monto Estimado</p>
                     <p className="text-base text-slate-900 dark:text-white">
-                      {formatCLP(licitacion.montoEstimado)}
+                      {formatCLP(licitacion.montoEstimado)} {licitacion.moneda || "CLP"}
                     </p>
                   </div>
                 </div>
+                {(licitacion.codigoEstado || licitacion.estadoTexto) && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {licitacion.codigoEstado && (
+                      <div>
+                        <p className="text-sm font-medium text-slate-400">Código Estado</p>
+                        <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoEstado}</p>
+                      </div>
+                    )}
+                    {licitacion.estadoTexto && (
+                      <div>
+                        <p className="text-sm font-medium text-slate-400">Estado Texto</p>
+                        <p className="text-base text-slate-900 dark:text-white">{licitacion.estadoTexto}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {(licitacion.codigoTipo || licitacion.tipoLicitacion) && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {licitacion.codigoTipo && (
+                      <div>
+                        <p className="text-sm font-medium text-slate-400">Código Tipo</p>
+                        <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoTipo}</p>
+                      </div>
+                    )}
+                    {licitacion.tipoLicitacion && (
+                      <div>
+                        <p className="text-sm font-medium text-slate-400">Tipo de Licitación</p>
+                        <p className="text-base text-slate-900 dark:text-white">{licitacion.tipoLicitacion}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {licitacion.tipoConvocatoria && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tipo de Convocatoria</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tipoConvocatoria}</p>
+                  </div>
+                )}
+                {licitacion.diasCierreLicitacion !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Días para Cierre de Licitación</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.diasCierreLicitacion} días</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-medium text-slate-400">Unidad Responsable</p>
                   {editandoUnidad ? (
@@ -501,8 +548,35 @@ export default function LicitacionDetailPage() {
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-white">Información del Comprador</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Datos del organismo comprador y contacto responsable
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3">
+                {licitacion.codigoOrganismo && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Código Organismo</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoOrganismo}</p>
+                  </div>
+                )}
+                {licitacion.nombreUnidad && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-slate-400">Unidad Compradora</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.nombreUnidad}</p>
+                  </div>
+                )}
+                {licitacion.rutUnidad && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">RUT Unidad</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.rutUnidad}</p>
+                  </div>
+                )}
+                {licitacion.codigoUnidad && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Código Unidad</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoUnidad}</p>
+                  </div>
+                )}
                 {licitacion.regionUnidad && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Región</p>
@@ -515,18 +589,13 @@ export default function LicitacionDetailPage() {
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.comunaUnidad}</p>
                   </div>
                 )}
-                {licitacion.nombreUnidad && (
-                  <div>
-                    <p className="text-sm font-medium text-slate-400">Unidad Compradora</p>
-                    <p className="text-base text-slate-900 dark:text-white">{licitacion.nombreUnidad}</p>
-                  </div>
-                )}
                 {licitacion.direccionUnidad && (
                   <div className="md:col-span-3">
                     <p className="text-sm font-medium text-slate-400">Dirección</p>
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.direccionUnidad}</p>
                   </div>
                 )}
+                <Separator className="md:col-span-3 bg-white/10" />
                 {licitacion.nombreUsuario && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Responsable del Organismo</p>
@@ -539,10 +608,16 @@ export default function LicitacionDetailPage() {
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.cargoUsuario}</p>
                   </div>
                 )}
-                {licitacion.codigoOrganismo && (
+                {licitacion.rutUsuario && (
                   <div>
-                    <p className="text-sm font-medium text-slate-400">Código Organismo</p>
-                    <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoOrganismo}</p>
+                    <p className="text-sm font-medium text-slate-400">RUT Usuario</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.rutUsuario}</p>
+                  </div>
+                )}
+                {licitacion.codigoUsuario && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Código Usuario</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoUsuario}</p>
                   </div>
                 )}
               </CardContent>
@@ -554,6 +629,9 @@ export default function LicitacionDetailPage() {
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-white">Información Contractual y Financiera</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Detalles del contrato, financiamiento y responsables
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3">
                 {licitacion.fuenteFinanciamiento && (
@@ -562,10 +640,47 @@ export default function LicitacionDetailPage() {
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.fuenteFinanciamiento}</p>
                   </div>
                 )}
-                {licitacion.tiempoDuracionContrato && (
+                {licitacion.estimacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Estimación</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.estimacion}</p>
+                  </div>
+                )}
+                {licitacion.visibilidadMonto && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Visibilidad del Monto</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.visibilidadMonto}</p>
+                  </div>
+                )}
+                {licitacion.modalidad && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Modalidad</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.modalidad}</p>
+                  </div>
+                )}
+                {licitacion.tipoPago && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tipo de Pago</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tipoPago}</p>
+                  </div>
+                )}
+                {(licitacion.tiempo && licitacion.unidadTiempo) && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tiempo de Entrega</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tiempo} {licitacion.unidadTiempo}</p>
+                  </div>
+                )}
+                <Separator className="md:col-span-3 bg-white/10" />
+                {(licitacion.tiempoDuracionContrato && licitacion.unidadTiempoDuracionContrato) && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Duración del Contrato</p>
-                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tiempoDuracionContrato} meses</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tiempoDuracionContrato} {licitacion.unidadTiempoDuracionContrato}</p>
+                  </div>
+                )}
+                {licitacion.tipoDuracionContrato && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tipo de Duración</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tipoDuracionContrato}</p>
                   </div>
                 )}
                 {licitacion.esRenovable !== null && (
@@ -574,6 +689,25 @@ export default function LicitacionDetailPage() {
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.esRenovable ? "Sí" : "No"}</p>
                   </div>
                 )}
+                {(licitacion.valorTiempoRenovacion && licitacion.periodoTiempoRenovacion) && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tiempo de Renovación</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.valorTiempoRenovacion} {licitacion.periodoTiempoRenovacion}</p>
+                  </div>
+                )}
+                {licitacion.extensionPlazo !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Extensión de Plazo</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.extensionPlazo ? "Sí" : "No"}</p>
+                  </div>
+                )}
+                {licitacion.unidadTiempoContratoLicitacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Unidad de Tiempo Contrato</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.unidadTiempoContratoLicitacion}</p>
+                  </div>
+                )}
+                <Separator className="md:col-span-3 bg-white/10" />
                 {licitacion.nombreResponsableContrato && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Responsable del Contrato</p>
@@ -596,16 +730,61 @@ export default function LicitacionDetailPage() {
                     </a>
                   </div>
                 )}
-                {licitacion.cantidadReclamos !== null && licitacion.cantidadReclamos > 0 && (
+                {licitacion.nombreResponsablePago && (
                   <div>
-                    <p className="text-sm font-medium text-slate-400">Cantidad de Reclamos</p>
-                    <p className="text-base text-red-400 font-bold">{licitacion.cantidadReclamos}</p>
+                    <p className="text-sm font-medium text-slate-400">Responsable de Pago</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.nombreResponsablePago}</p>
+                  </div>
+                )}
+                {licitacion.emailResponsablePago && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Email Responsable Pago</p>
+                    <a href={`mailto:${licitacion.emailResponsablePago}`} className="text-base text-indigo-400 hover:text-indigo-300">
+                      {licitacion.emailResponsablePago}
+                    </a>
+                  </div>
+                )}
+                <Separator className="md:col-span-3 bg-white/10" />
+                {licitacion.subContratacion !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Subcontratación</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.subContratacion ? "Permitida" : "No permitida"}</p>
+                  </div>
+                )}
+                {licitacion.prohibicionContratacion !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Prohibición de Contratación</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.prohibicionContratacion ? "Sí" : "No"}</p>
+                  </div>
+                )}
+                {licitacion.esBaseTipo !== null && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Es Base Tipo</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.esBaseTipo ? "Sí" : "No"}</p>
                   </div>
                 )}
                 {licitacion.codigoBIP && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Código BIP</p>
                     <p className="text-base text-slate-900 dark:text-white">{licitacion.codigoBIP}</p>
+                  </div>
+                )}
+                {licitacion.cantidadReclamos !== null && licitacion.cantidadReclamos > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Cantidad de Reclamos</p>
+                    <p className="text-base text-red-400 font-bold">{licitacion.cantidadReclamos}</p>
+                  </div>
+                )}
+                {licitacion.justificacionMontoEstimado && (
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Justificación del Monto Estimado</p>
+                    <p className="text-base text-slate-600 dark:text-slate-300">{licitacion.justificacionMontoEstimado}</p>
+                  </div>
+                )}
+                {licitacion.observacionContract && (
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Observaciones del Contrato</p>
+                    <p className="text-base text-slate-600 dark:text-slate-300">{licitacion.observacionContract}</p>
                   </div>
                 )}
               </CardContent>
@@ -749,12 +928,39 @@ export default function LicitacionDetailPage() {
           )}
 
           {/* Fechas Adicionales */}
-          {(licitacion.fechaEstimadaAdjudicacion || licitacion.fechaActoAperturaTecnica || licitacion.fechaActoAperturaEconomica || licitacion.fechaVisitaTerreno) && (
+          {(licitacion.fechaEstimadaAdjudicacion || licitacion.fechaActoAperturaTecnica || licitacion.fechaActoAperturaEconomica || licitacion.fechaVisitaTerreno || licitacion.fechaCreacion || licitacion.fechaInicio || licitacion.fechaFinal) && (
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-white">Fechas Adicionales del Proceso</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Cronograma completo de la licitación
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-3">
+                {licitacion.fechaCreacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Fecha de Creación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaCreacion).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+                {licitacion.fechaInicio && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Fecha de Inicio</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaInicio).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+                {licitacion.fechaFinal && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Fecha Final</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaFinal).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
                 {licitacion.fechaEstimadaAdjudicacion && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Adjudicación Estimada</p>
@@ -801,6 +1007,106 @@ export default function LicitacionDetailPage() {
                     <p className="text-base text-slate-900 dark:text-white">
                       {new Date(licitacion.fechaEstimadaFirma).toLocaleDateString('es-CL')}
                     </p>
+                  </div>
+                )}
+                {licitacion.fechaSoporteFisico && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Soporte Físico</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaSoporteFisico).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+                {licitacion.fechaTiempoEvaluacion && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Tiempo de Evaluación</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaTiempoEvaluacion).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+                {licitacion.fechaEntregaAntecedentes && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Entrega de Antecedentes</p>
+                    <p className="text-base text-slate-900 dark:text-white">
+                      {new Date(licitacion.fechaEntregaAntecedentes).toLocaleDateString('es-CL')}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Direcciones y Ubicación */}
+          {(licitacion.direccionVisita || licitacion.direccionEntrega) && (
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-white">Direcciones</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Direcciones de visita y entrega
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                {licitacion.direccionVisita && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Dirección de Visita</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.direccionVisita}</p>
+                  </div>
+                )}
+                {licitacion.direccionEntrega && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Dirección de Entrega</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.direccionEntrega}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Información de Etapas y Estado del Proceso */}
+          {(licitacion.etapas || licitacion.estadoEtapas || licitacion.tomaRazon || licitacion.estadoPublicidadOfertas || licitacion.contrato || licitacion.obras) && (
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-white">Estado del Proceso y Etapas</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Información sobre las etapas y el estado del proceso licitatorio
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-3">
+                {licitacion.etapas && (
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Etapas</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.etapas}</p>
+                  </div>
+                )}
+                {licitacion.estadoEtapas && (
+                  <div className="md:col-span-3">
+                    <p className="text-sm font-medium text-slate-400">Estado de Etapas</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.estadoEtapas}</p>
+                  </div>
+                )}
+                {licitacion.tomaRazon && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Toma de Razón</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.tomaRazon}</p>
+                  </div>
+                )}
+                {licitacion.estadoPublicidadOfertas && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Estado Publicidad Ofertas</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.estadoPublicidadOfertas}</p>
+                  </div>
+                )}
+                {licitacion.contrato && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Contrato</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.contrato}</p>
+                  </div>
+                )}
+                {licitacion.obras && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">Obras</p>
+                    <p className="text-base text-slate-900 dark:text-white">{licitacion.obras}</p>
                   </div>
                 )}
               </CardContent>
