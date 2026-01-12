@@ -72,6 +72,11 @@ export async function GET(
           },
         },
         adjudicacion: true,
+        soporteTecnico: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     });
 

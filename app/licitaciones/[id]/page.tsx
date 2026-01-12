@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import useSWR from "swr";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2, Headphones, Plus } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -44,6 +44,20 @@ export default function LicitacionDetailPage() {
   const [eliminando, setEliminando] = useState(false);
   const [editandoUnidad, setEditandoUnidad] = useState(false);
   const [unidadTemp, setUnidadTemp] = useState("");
+
+  // Estados para Soporte Técnico
+  const [mostrandoFormSoporte, setMostrandoFormSoporte] = useState(false);
+  const [guardandoSoporte, setGuardandoSoporte] = useState(false);
+  const [formSoporte, setFormSoporte] = useState({
+    nombreContacto: "",
+    emailContacto: "",
+    telefonoContacto: "",
+    tipoSoporte: "TECNICO",
+    horarioInicio: "",
+    horarioFin: "",
+    diasDisponibles: "",
+    observaciones: "",
+  });
 
   const { data, error, isLoading, mutate } = useSWR(
     `/api/licitaciones/${id}`,
@@ -189,6 +203,47 @@ export default function LicitacionDetailPage() {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al actualizar unidad responsable");
+    }
+  };
+
+  const handleGuardarSoporte = async () => {
+    if (!formSoporte.nombreContacto.trim() || !formSoporte.emailContacto.trim()) {
+      toast.error("Nombre y email son obligatorios");
+      return;
+    }
+
+    setGuardandoSoporte(true);
+    try {
+      const res = await fetch(`/api/licitaciones/${id}/soporte`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formSoporte),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al guardar contacto");
+        return;
+      }
+
+      toast.success("Contacto de soporte agregado");
+      setFormSoporte({
+        nombreContacto: "",
+        emailContacto: "",
+        telefonoContacto: "",
+        tipoSoporte: "TECNICO",
+        horarioInicio: "",
+        horarioFin: "",
+        diasDisponibles: "",
+        observaciones: "",
+      });
+      setMostrandoFormSoporte(false);
+      mutate(); // Recargar datos
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al guardar contacto");
+    } finally {
+      setGuardandoSoporte(false);
     }
   };
 
@@ -1260,6 +1315,209 @@ export default function LicitacionDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Soporte Técnico */}
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-slate-900 dark:text-white">
+                <div className="flex items-center gap-2">
+                  <Headphones className="h-5 w-5" />
+                  Contactos de Soporte Técnico
+                </div>
+                {!mostrandoFormSoporte && (
+                  <Button
+                    size="sm"
+                    onClick={() => setMostrandoFormSoporte(true)}
+                    className="bg-indigo-600 text-white hover:bg-indigo-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar Contacto
+                  </Button>
+                )}
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                Información de contacto del soporte técnico y horarios de atención
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Formulario para agregar contacto */}
+              {mostrandoFormSoporte && (
+                <div className="space-y-4 rounded-lg border border-indigo-500/30 bg-indigo-500/5 p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Nombre del Contacto *</label>
+                      <Input
+                        value={formSoporte.nombreContacto}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, nombreContacto: e.target.value })}
+                        placeholder="Ej: Juan Pérez"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Email *</label>
+                      <Input
+                        type="email"
+                        value={formSoporte.emailContacto}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, emailContacto: e.target.value })}
+                        placeholder="contacto@ejemplo.cl"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Teléfono</label>
+                      <Input
+                        value={formSoporte.telefonoContacto}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, telefonoContacto: e.target.value })}
+                        placeholder="+56 9 1234 5678"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Tipo de Soporte</label>
+                      <select
+                        value={formSoporte.tipoSoporte}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, tipoSoporte: e.target.value })}
+                        className="mt-1 w-full rounded-md border border-slate-300 dark:border-white/20 bg-white dark:bg-white/10 px-3 py-2 text-sm text-slate-900 dark:text-white"
+                      >
+                        <option value="TECNICO">Técnico</option>
+                        <option value="COMERCIAL">Comercial</option>
+                        <option value="ADMINISTRATIVO">Administrativo</option>
+                        <option value="OTRO">Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Horario de Inicio</label>
+                      <Input
+                        type="time"
+                        value={formSoporte.horarioInicio}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, horarioInicio: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Horario de Fin</label>
+                      <Input
+                        type="time"
+                        value={formSoporte.horarioFin}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, horarioFin: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-slate-400">Días Disponibles</label>
+                      <Input
+                        value={formSoporte.diasDisponibles}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, diasDisponibles: e.target.value })}
+                        placeholder="Ej: Lunes a Viernes"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-sm font-medium text-slate-400">Observaciones</label>
+                      <Textarea
+                        value={formSoporte.observaciones}
+                        onChange={(e) => setFormSoporte({ ...formSoporte, observaciones: e.target.value })}
+                        placeholder="Información adicional..."
+                        className="mt-1 min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleGuardarSoporte}
+                      disabled={guardandoSoporte}
+                      className="flex-1 bg-green-600 text-white hover:bg-green-700"
+                    >
+                      {guardandoSoporte ? "Guardando..." : "Guardar Contacto"}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setMostrandoFormSoporte(false);
+                        setFormSoporte({
+                          nombreContacto: "",
+                          emailContacto: "",
+                          telefonoContacto: "",
+                          tipoSoporte: "TECNICO",
+                          horarioInicio: "",
+                          horarioFin: "",
+                          diasDisponibles: "",
+                          observaciones: "",
+                        });
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <Separator className="bg-white/10" />
+
+              {/* Lista de contactos de soporte */}
+              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                {licitacion.soporteTecnico && licitacion.soporteTecnico.length > 0 ? (
+                  licitacion.soporteTecnico.map((soporte: any) => (
+                    <div key={soporte.id} className="rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <p className="text-base font-semibold text-slate-900 dark:text-white">
+                              {soporte.nombreContacto}
+                            </p>
+                            <Badge variant="outline" className="text-xs">
+                              {soporte.tipoSoporte}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                              <span className="font-medium">Email:</span>
+                              <a href={`mailto:${soporte.emailContacto}`} className="text-indigo-400 hover:text-indigo-300">
+                                {soporte.emailContacto}
+                              </a>
+                            </div>
+                            {soporte.telefonoContacto && (
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                <span className="font-medium">Teléfono:</span>
+                                <a href={`tel:${soporte.telefonoContacto}`} className="text-indigo-400 hover:text-indigo-300">
+                                  {soporte.telefonoContacto}
+                                </a>
+                              </div>
+                            )}
+                            {(soporte.horarioInicio && soporte.horarioFin) && (
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                <span className="font-medium">Horario:</span>
+                                <span>{soporte.horarioInicio} - {soporte.horarioFin}</span>
+                              </div>
+                            )}
+                            {soporte.diasDisponibles && (
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                                <span className="font-medium">Disponible:</span>
+                                <span>{soporte.diasDisponibles}</span>
+                              </div>
+                            )}
+                            {soporte.observaciones && (
+                              <div className="mt-2 text-slate-600 dark:text-slate-300 text-xs">
+                                {soporte.observaciones}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-8 text-center">
+                    <Headphones className="mb-2 h-8 w-8 text-slate-400" />
+                    <p className="text-sm text-slate-400">
+                      No hay contactos de soporte registrados. Agrega el primero arriba.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Información adicional */}
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">

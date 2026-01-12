@@ -1,0 +1,76 @@
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await req.json();
+    const {
+      nombreContacto,
+      emailContacto,
+      telefonoContacto,
+      tipoSoporte,
+      horarioInicio,
+      horarioFin,
+      diasDisponibles,
+      observaciones,
+    } = body;
+
+    // Validar campos obligatorios
+    if (!nombreContacto || !emailContacto) {
+      return NextResponse.json(
+        { error: "Nombre y email son obligatorios" },
+        { status: 400 }
+      );
+    }
+
+    // Verificar que la licitación existe
+    const licitacion = await prisma.licitacion.findUnique({
+      where: { id },
+    });
+
+    if (!licitacion) {
+      return NextResponse.json(
+        { error: "Licitación no encontrada" },
+        { status: 404 }
+      );
+    }
+
+    // Crear el contacto de soporte
+    const soporte = await prisma.soporteTecnico.create({
+      data: {
+        licitacionId: id,
+        nombreContacto,
+        emailContacto,
+        telefonoContacto: telefonoContacto || null,
+        tipoSoporte: tipoSoporte || "TECNICO",
+        horarioInicio: horarioInicio || null,
+        horarioFin: horarioFin || null,
+        diasDisponibles: diasDisponibles || null,
+        observaciones: observaciones || null,
+        createdById: session.user.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      soporte,
+      message: "Contacto de soporte agregado correctamente",
+    });
+  } catch (error) {
+    console.error("Error creando contacto de soporte:", error);
+    return NextResponse.json(
+      { error: "Error al crear contacto de soporte" },
+      { status: 500 }
+    );
+  }
+}
