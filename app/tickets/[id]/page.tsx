@@ -229,12 +229,13 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const handleAssignUser = async (userId: string) => {
     setAssigningUser(true);
     try {
+      const actualUserId = userId === "UNASSIGNED" ? null : userId;
       const res = await fetch(`/api/tickets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assigneeId: userId || null,
-          status: userId && ticket?.status === "CREADO" ? "ASIGNADO" : ticket?.status
+          assigneeId: actualUserId,
+          status: actualUserId && ticket?.status === "CREADO" ? "ASIGNADO" : ticket?.status
         }),
       });
 
@@ -459,7 +460,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       <SelectValue placeholder={assigningUser ? "Asignando..." : "Seleccionar usuario"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin asignar</SelectItem>
+                      <SelectItem value="UNASSIGNED">Sin asignar</SelectItem>
                       {usersData?.users?.filter((u: any) => u.activo).map((user: any) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.name || user.email} {user.role === "ADMIN" ? "(Admin)" : ""}
