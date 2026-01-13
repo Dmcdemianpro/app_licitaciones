@@ -41,7 +41,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ ticket });
+    // Agregar folioFormateado
+    const ticketConFolio = {
+      ...ticket,
+      folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
+    };
+
+    return NextResponse.json({ ticket: ticketConFolio });
   } catch (error) {
     console.error("Error obteniendo ticket:", error);
     return NextResponse.json(
@@ -122,7 +128,13 @@ export async function PATCH(
       });
     }
 
-    return NextResponse.json({ ticket });
+    // Agregar folioFormateado
+    const ticketConFolio = {
+      ...ticket,
+      folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
+    };
+
+    return NextResponse.json({ ticket: ticketConFolio });
   } catch (error) {
     console.error("Error actualizando ticket:", error);
     return NextResponse.json(

@@ -84,6 +84,7 @@ model VerificationToken {
 
 model Ticket {
   id          String   @id @default(cuid()) @db.NVarChar(100)
+  folio       Int      @unique @default(autoincrement())
   title       String   @db.NVarChar(255)
   description String?  @db.NVarChar(MAX)
   type        String   @db.NVarChar(100)
@@ -106,6 +107,7 @@ model Ticket {
   @@index([assigneeId], map: "idx_ticket_assignee")
   @@index([status], map: "idx_ticket_status")
   @@index([priority], map: "idx_ticket_priority")
+  @@index([folio], map: "idx_ticket_folio")
 }
 
 model Licitacion {
@@ -231,6 +233,7 @@ model Licitacion {
 
 model Cita {
   id            String   @id @default(cuid()) @db.NVarChar(100)
+  folio         Int      @unique @default(autoincrement())
   titulo        String   @db.NVarChar(255)
   descripcion   String?  @db.NVarChar(MAX)
   tipo          String   @default("REUNION") @db.NVarChar(50) // REUNION, PRESENTACION, VISITA, ENTREGA, OTRO
@@ -254,6 +257,7 @@ model Cita {
   @@index([fechaInicio], map: "idx_cita_fecha_inicio")
   @@index([estado], map: "idx_cita_estado")
   @@index([organizadorId], map: "idx_cita_organizador")
+  @@index([folio], map: "idx_cita_folio")
 }
 
 model CitaParticipante {

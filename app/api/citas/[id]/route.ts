@@ -45,7 +45,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ cita });
+    // Agregar folioFormateado
+    const citaConFolio = {
+      ...cita,
+      folioFormateado: `HEC-C${String(cita.folio).padStart(2, "0")}`,
+    };
+
+    return NextResponse.json({ cita: citaConFolio });
   } catch (error) {
     console.error("Error obteniendo cita:", error);
     return NextResponse.json(
@@ -93,7 +99,13 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ cita });
+    // Agregar folioFormateado
+    const citaConFolio = {
+      ...cita,
+      folioFormateado: `HEC-C${String(cita.folio).padStart(2, "0")}`,
+    };
+
+    return NextResponse.json({ cita: citaConFolio });
   } catch (error) {
     console.error("Error actualizando cita:", error);
     return NextResponse.json(

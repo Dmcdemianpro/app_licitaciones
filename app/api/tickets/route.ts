@@ -13,7 +13,13 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(tickets);
+    // Agregar folioFormateado a cada ticket
+    const ticketsConFolio = tickets.map((ticket) => ({
+      ...ticket,
+      folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
+    }));
+
+    return NextResponse.json(ticketsConFolio);
   } catch (error) {
     console.error("Error fetching tickets:", error);
     return NextResponse.json(
@@ -52,7 +58,13 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(ticket, { status: 201 });
+    // Agregar folioFormateado al ticket creado
+    const ticketConFolio = {
+      ...ticket,
+      folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
+    };
+
+    return NextResponse.json(ticketConFolio, { status: 201 });
   } catch (error) {
     console.error("Error creating ticket:", error);
     return NextResponse.json(

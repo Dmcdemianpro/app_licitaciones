@@ -46,7 +46,13 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json({ citas });
+    // Agregar folioFormateado a cada cita
+    const citasConFolio = citas.map((cita) => ({
+      ...cita,
+      folioFormateado: `HEC-C${String(cita.folio).padStart(2, "0")}`,
+    }));
+
+    return NextResponse.json({ citas: citasConFolio });
   } catch (error) {
     console.error("Error obteniendo citas:", error);
     return NextResponse.json(

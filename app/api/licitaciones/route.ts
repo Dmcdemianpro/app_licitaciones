@@ -85,7 +85,7 @@ export async function GET(req: Request) {
         ...licitacion,
         diasRestantes,
         montoEstimado: licitacion.montoEstimado ? licitacion.montoEstimado.toString() : null,
-        folioFormateado: `HEC-${String(licitacion.folio).padStart(3, "0")}`,
+        folioFormateado: `HEC-L${String(licitacion.folio).padStart(2, "0")}`,
       };
     });
 

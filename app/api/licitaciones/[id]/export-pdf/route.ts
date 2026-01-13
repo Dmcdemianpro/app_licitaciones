@@ -262,7 +262,7 @@ function generatePDFHTML(licitacion: any): string {
 
   <div class="container">
     <div class="header">
-      <h1>Licitación ${licitacion.folioFormateado || `HEC-${String(licitacion.folio).padStart(3, "0")}`}</h1>
+      <h1>Licitación ${licitacion.folioFormateado || `HEC-L${String(licitacion.folio).padStart(2, "0")}`}</h1>
       <div class="subtitle">Exportación generada el ${new Date().toLocaleDateString("es-CL")} a las ${new Date().toLocaleTimeString("es-CL")}</div>
     </div>
 
