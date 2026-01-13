@@ -24,25 +24,6 @@ export default async function RootLayout({
 }) {
   const session = await auth();
 
-  if (!session) {
-    return (
-      <html lang="es" suppressHydrationWarning>
-        <body
-          className={`${inter.className} flex min-h-screen bg-gradient-to-br from-indigo-100 via-white to-purple-100 dark:bg-[radial-gradient(ellipse_at_top,_#312e81_0%,_#0f172a_40%,_#0b1224_100%)] text-slate-900 dark:text-slate-100`}
-        >
-          <NextAuthSessionProvider>
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-              <main className="flex flex-1 items-center justify-center p-6 backdrop-blur">
-                {children}
-              </main>
-              <Toaster />
-            </ThemeProvider>
-          </NextAuthSessionProvider>
-        </body>
-      </html>
-    );
-  }
-
   return (
     <html lang="es" suppressHydrationWarning>
       <body
@@ -57,18 +38,9 @@ export default async function RootLayout({
                   <span className="text-lg font-semibold text-slate-900 dark:text-white">Sistema de Licitaciones</span>
                   <div className="flex items-center gap-4">
                     <ThemeToggle />
-                    {session ? (
-                      <span className="text-sm text-slate-800 dark:text-slate-200">
-                        Hola, {session.user?.name ?? session.user?.email}
-                      </span>
-                    ) : (
-                      <a
-                        href="/login"
-                        className="rounded px-3 py-1 text-sm text-slate-900 dark:text-slate-100 underline hover:bg-slate-100 dark:hover:bg-white/10"
-                      >
-                        Iniciar sesión
-                      </a>
-                    )}
+                    <span className="text-sm text-slate-800 dark:text-slate-200">
+                      Hola, {session?.user?.name ?? session?.user?.email ?? "Usuario"}
+                    </span>
                   </div>
                 </header>
                 <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-transparent">{children}</main>
