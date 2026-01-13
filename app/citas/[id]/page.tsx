@@ -62,6 +62,8 @@ const getEstadoColor = (estado: string) => {
 
 type Cita = {
   id: string;
+  folio: number;
+  folioFormateado: string;
   titulo: string;
   descripcion: string | null;
   tipo: string;
