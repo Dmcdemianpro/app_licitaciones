@@ -244,7 +244,7 @@ export default function CitaDetailPage({ params }: { params: Promise<{ id: strin
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Citas</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{cita.titulo}</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">Información completa de la cita</p>
+            <p className="text-sm text-slate-600 dark:text-slate-200">ID: {cita.folioFormateado}</p>
           </div>
         </div>
         <div className="flex gap-2">

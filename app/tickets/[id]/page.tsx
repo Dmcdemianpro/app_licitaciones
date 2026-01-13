@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +16,7 @@ import {
   CheckCircle,
   PlayCircle,
   UserCheck,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,17 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import useSWR from "swr";
 
 const statusLabels: Record<string, string> = {
@@ -69,6 +82,8 @@ const getPriorityColor = (priority: string) => {
 
 type Ticket = {
   id: string;
+  folio: number;
+  folioFormateado: string;
   title: string;
   description: string | null;
   type: string;
@@ -98,9 +113,15 @@ const fetcher = async (url: string) => {
 export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { data: session } = useSession();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Delete dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteMotivo, setDeleteMotivo] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   // Notes
   const [notaContenido, setNotaContenido] = useState("");
@@ -116,6 +137,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     `/api/tickets/${id}/documentos`,
     fetcher
   );
+
+  // Users for assignment
+  const { data: usersData } = useSWR("/api/usuarios", fetcher);
+  const [assigningUser, setAssigningUser] = useState(false);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -170,6 +195,62 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     }).format(date);
   };
 
+  const handleDelete = async () => {
+    if (!deleteMotivo.trim()) {
+      alert("Debes ingresar un motivo para eliminar el ticket");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motivo: deleteMotivo }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Ticket eliminado correctamente");
+        router.push("/tickets");
+      } else {
+        alert(data.error || "Error al eliminar el ticket");
+      }
+    } catch (err) {
+      alert("Error al eliminar el ticket");
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+      setDeleteMotivo("");
+    }
+  };
+
+  const handleAssignUser = async (userId: string) => {
+    setAssigningUser(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assigneeId: userId || null,
+          status: userId && ticket?.status === "CREADO" ? "ASIGNADO" : ticket?.status
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTicket(data.ticket);
+      } else {
+        alert("No se pudo asignar el usuario");
+      }
+    } catch (err) {
+      alert("Error al asignar usuario");
+    } finally {
+      setAssigningUser(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -222,7 +303,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-indigo-600 dark:text-indigo-200">Tickets</p>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{ticket.title}</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-200">ID: {ticket.id}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-200">ID: {ticket.folioFormateado}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -232,6 +313,16 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               Volver
             </Link>
           </Button>
+          {session?.user?.role === "ADMIN" && (
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(true)}
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar
+            </Button>
+          )}
         </div>
       </header>
 
@@ -346,7 +437,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   Asignado a
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 {ticket.assignedTo ? (
                   <div className="space-y-1">
                     <p className="font-medium">{ticket.assignedTo.name || "Sin nombre"}</p>
@@ -355,6 +446,28 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 ) : (
                   <p className="text-sm text-slate-400">Sin asignar</p>
                 )}
+
+                {/* Selector de usuario para asignar/reasignar */}
+                <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
+                  <Label className="text-sm font-medium">Asignar o cambiar usuario</Label>
+                  <Select
+                    value={ticket.assignedTo?.id || ""}
+                    onValueChange={handleAssignUser}
+                    disabled={assigningUser || !usersData?.users}
+                  >
+                    <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                      <SelectValue placeholder={assigningUser ? "Asignando..." : "Seleccionar usuario"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Sin asignar</SelectItem>
+                      {usersData?.users?.filter((u: any) => u.activo).map((user: any) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name || user.email} {user.role === "ADMIN" ? "(Admin)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -539,6 +652,56 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           </Card>
         </div>
       </div>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="border-white/10 bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white backdrop-blur">
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar ticket?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600 dark:text-slate-300">
+              Esta acción marcará el ticket como eliminado. La información se ocultará pero se mantendrá para auditoría.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="motivo" className="text-sm font-medium">
+              Motivo de eliminación *
+            </Label>
+            <Textarea
+              id="motivo"
+              placeholder="Ingresa el motivo por el cual se eliminará este ticket..."
+              value={deleteMotivo}
+              onChange={(e) => setDeleteMotivo(e.target.value)}
+              rows={3}
+              className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-400"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={deleting}
+              className="border-white/20 text-slate-900 dark:text-white hover:bg-white/10"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting || !deleteMotivo.trim()}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar ticket
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

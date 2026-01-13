@@ -258,7 +258,10 @@ export default function CitasPage() {
                           <div className="flex-1 space-y-3">
                             <div className="flex items-start justify-between gap-4 flex-wrap">
                               <div className="flex items-center gap-3 flex-wrap">
-                                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{cita.titulo}</h3>
+                                <div className="flex flex-col">
+                                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{cita.titulo}</h3>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">ID: {cita.folioFormateado}</p>
+                                </div>
                                 <Badge className={getEstadoColor(cita.estado)}>
                                   {estadoLabels[cita.estado] || cita.estado}
                                 </Badge>

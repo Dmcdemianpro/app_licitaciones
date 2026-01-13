@@ -7,9 +7,13 @@ import { ticketCreateSchema } from "@/lib/validations/tickets";
 export async function GET() {
   try {
     const tickets = await prisma.ticket.findMany({
+      where: {
+        deletedAt: null, // Solo tickets no eliminados
+      },
       orderBy: { createdAt: "desc" },
       include: {
         owner: { select: { id: true, name: true, email: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
       },
     });
 
