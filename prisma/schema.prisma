@@ -30,6 +30,7 @@ model User {
   // Relaciones de funcionalidad
   ticketsCreados          Ticket[]       @relation("TicketOwner")
   ticketsAsignados        Ticket[]       @relation("TicketAssignee")
+  ticketsEliminados       Ticket[]       @relation("TicketDeletedBy")
   licitacionesResponsable Licitacion[]   @relation("LicitacionResponsable")
   licitacionesCreadas     Licitacion[]   @relation("LicitacionCreatedBy")
   licitacionesEliminadas  Licitacion[]   @relation("LicitacionDeletedBy")
@@ -83,21 +84,25 @@ model VerificationToken {
 }
 
 model Ticket {
-  id          String   @id @default(cuid()) @db.NVarChar(100)
-  folio       Int      @unique @default(autoincrement())
-  title       String   @db.NVarChar(255)
-  description String?  @db.NVarChar(MAX)
-  type        String   @db.NVarChar(100)
-  priority    String   @default("MEDIA") @db.NVarChar(50) // ALTA, MEDIA, BAJA
-  status      String   @default("CREADO") @db.NVarChar(50) // CREADO, ASIGNADO, INICIADO, FINALIZADO
-  assignee    String?  @db.NVarChar(255)
-  assigneeId  String?  @map("assignee_id") @db.NVarChar(100)
-  ownerId     String   @map("owner_id") @db.NVarChar(100)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String    @id @default(cuid()) @db.NVarChar(100)
+  folio             Int       @unique @default(autoincrement())
+  title             String    @db.NVarChar(255)
+  description       String?   @db.NVarChar(MAX)
+  type              String    @db.NVarChar(100)
+  priority          String    @default("MEDIA") @db.NVarChar(50) // ALTA, MEDIA, BAJA
+  status            String    @default("CREADO") @db.NVarChar(50) // CREADO, ASIGNADO, INICIADO, FINALIZADO
+  assignee          String?   @db.NVarChar(255)
+  assigneeId        String?   @map("assignee_id") @db.NVarChar(100)
+  ownerId           String    @map("owner_id") @db.NVarChar(100)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime? @map("deleted_at")
+  deletedById       String?   @map("deleted_by_id") @db.NVarChar(100)
+  motivoEliminacion String?   @map("motivo_eliminacion") @db.NVarChar(MAX)
 
-  owner          User             @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  assignedTo     User?            @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner          User              @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assignedTo     User?             @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deletedBy      User?             @relation("TicketDeletedBy", fields: [deletedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
   documentos     Documento[]
   notas          Nota[]
   soporteTecnico SoporteTecnico[]
@@ -108,6 +113,7 @@ model Ticket {
   @@index([status], map: "idx_ticket_status")
   @@index([priority], map: "idx_ticket_priority")
   @@index([folio], map: "idx_ticket_folio")
+  @@index([deletedAt], map: "idx_ticket_deleted_at")
 }
 
 model Licitacion {

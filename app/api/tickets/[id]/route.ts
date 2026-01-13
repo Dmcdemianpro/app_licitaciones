@@ -143,3 +143,72 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    // PERMISOS: Solo ADMIN puede eliminar tickets
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "No tienes permisos para eliminar tickets. Solo el rol ADMIN puede hacerlo." },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const body = await req.json();
+    const { motivo } = body;
+
+    // Verificar que el ticket existe
+    const ticketExistente = await prisma.ticket.findUnique({
+      where: { id },
+    });
+
+    if (!ticketExistente) {
+      return NextResponse.json(
+        { error: "Ticket no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // SOFT DELETE: Marcar como eliminado en lugar de borrar
+    const ticket = await prisma.ticket.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.user.id,
+        motivoEliminacion: motivo || "Sin motivo especificado",
+      },
+    });
+
+    // Registrar en auditoría
+    await prisma.auditoriaLog.create({
+      data: {
+        accion: "DELETE",
+        entidad: "TICKET",
+        entidadId: id,
+        cambios: JSON.stringify({
+          eliminado: true,
+          motivo: motivo || "Sin motivo especificado",
+          ticket: ticketExistente
+        }),
+        userId: session.user.id,
+      },
+    });
+
+    return NextResponse.json({ success: true, message: "Ticket eliminado correctamente" });
+  } catch (error) {
+    console.error("Error eliminando ticket:", error);
+    return NextResponse.json(
+      { error: "Error al eliminar ticket" },
+      { status: 500 }
+    );
+  }
+}
