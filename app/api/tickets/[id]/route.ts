@@ -64,6 +64,19 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
+    // Obtener el ticket actual antes de actualizar (para auditoría)
+    const ticketAnterior = await prisma.ticket.findUnique({
+      where: { id },
+    });
+
+    if (!ticketAnterior) {
+      return NextResponse.json(
+        { error: "Ticket no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Actualizar el ticket
     const ticket = await prisma.ticket.update({
       where: { id },
       data: body,
@@ -84,6 +97,30 @@ export async function PATCH(
         },
       },
     });
+
+    // Registrar cambios en auditoría
+    const cambios: Record<string, { anterior: any; nuevo: any }> = {};
+    Object.keys(body).forEach((key) => {
+      if (ticketAnterior[key as keyof typeof ticketAnterior] !== body[key]) {
+        cambios[key] = {
+          anterior: ticketAnterior[key as keyof typeof ticketAnterior],
+          nuevo: body[key],
+        };
+      }
+    });
+
+    // Solo guardar en auditoría si hubo cambios
+    if (Object.keys(cambios).length > 0) {
+      await prisma.auditoriaLog.create({
+        data: {
+          accion: "UPDATE",
+          entidad: "TICKET",
+          entidadId: id,
+          cambios: JSON.stringify(cambios),
+          userId: session.user.id,
+        },
+      });
+    }
 
     return NextResponse.json({ ticket });
   } catch (error) {

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import useSWR from "swr";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2, Headphones, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2, Headphones, Plus, Edit, X } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -48,6 +48,7 @@ export default function LicitacionDetailPage() {
   // Estados para Soporte Técnico
   const [mostrandoFormSoporte, setMostrandoFormSoporte] = useState(false);
   const [guardandoSoporte, setGuardandoSoporte] = useState(false);
+  const [editandoSoporteId, setEditandoSoporteId] = useState<string | null>(null);
   const [formSoporte, setFormSoporte] = useState({
     nombreContacto: "",
     emailContacto: "",
@@ -247,6 +248,102 @@ export default function LicitacionDetailPage() {
     }
   };
 
+  const handleEditarSoporte = (soporte: any) => {
+    setEditandoSoporteId(soporte.id);
+    setFormSoporte({
+      nombreContacto: soporte.nombreContacto,
+      emailContacto: soporte.emailContacto,
+      telefonoContacto: soporte.telefonoContacto || "",
+      tipoSoporte: soporte.tipoSoporte,
+      horarioInicio: soporte.horarioInicio || "",
+      horarioFin: soporte.horarioFin || "",
+      diasDisponibles: soporte.diasDisponibles || "",
+      observaciones: soporte.observaciones || "",
+    });
+    setMostrandoFormSoporte(true);
+  };
+
+  const handleActualizarSoporte = async () => {
+    if (!formSoporte.nombreContacto.trim() || !formSoporte.emailContacto.trim()) {
+      toast.error("Nombre y email son obligatorios");
+      return;
+    }
+
+    setGuardandoSoporte(true);
+    try {
+      const res = await fetch(`/api/licitaciones/${id}/soporte/${editandoSoporteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formSoporte),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al actualizar contacto");
+        return;
+      }
+
+      toast.success("Contacto de soporte actualizado");
+      setFormSoporte({
+        nombreContacto: "",
+        emailContacto: "",
+        telefonoContacto: "",
+        tipoSoporte: "TECNICO",
+        horarioInicio: "",
+        horarioFin: "",
+        diasDisponibles: "",
+        observaciones: "",
+      });
+      setEditandoSoporteId(null);
+      setMostrandoFormSoporte(false);
+      mutate(); // Recargar datos
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al actualizar contacto");
+    } finally {
+      setGuardandoSoporte(false);
+    }
+  };
+
+  const handleEliminarSoporte = async (soporteId: string) => {
+    if (!confirm("¿Estás seguro de eliminar este contacto de soporte?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/licitaciones/${id}/soporte/${soporteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Error al eliminar contacto");
+        return;
+      }
+
+      toast.success("Contacto de soporte eliminado");
+      mutate(); // Recargar datos
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al eliminar contacto");
+    }
+  };
+
+  const handleCancelarEdicion = () => {
+    setFormSoporte({
+      nombreContacto: "",
+      emailContacto: "",
+      telefonoContacto: "",
+      tipoSoporte: "TECNICO",
+      horarioInicio: "",
+      horarioFin: "",
+      diasDisponibles: "",
+      observaciones: "",
+    });
+    setEditandoSoporteId(null);
+    setMostrandoFormSoporte(false);
+  };
+
   const handleEliminar = async () => {
     if (motivoEliminacion.trim().length < 10) {
       toast.error("El motivo debe tener al menos 10 caracteres");
@@ -403,6 +500,14 @@ export default function LicitacionDetailPage() {
               </AlertDialogContent>
             </AlertDialog>
           )}
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/api/licitaciones/${id}/export-pdf`, "_blank")}
+            className="border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
           <Button variant="default" asChild className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700">
             <Link href="/licitaciones">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1424,26 +1529,14 @@ export default function LicitacionDetailPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleGuardarSoporte}
+                      onClick={editandoSoporteId ? handleActualizarSoporte : handleGuardarSoporte}
                       disabled={guardandoSoporte}
                       className="flex-1 bg-green-600 text-white hover:bg-green-700"
                     >
-                      {guardandoSoporte ? "Guardando..." : "Guardar Contacto"}
+                      {guardandoSoporte ? (editandoSoporteId ? "Actualizando..." : "Guardando...") : (editandoSoporteId ? "Actualizar Contacto" : "Guardar Contacto")}
                     </Button>
                     <Button
-                      onClick={() => {
-                        setMostrandoFormSoporte(false);
-                        setFormSoporte({
-                          nombreContacto: "",
-                          emailContacto: "",
-                          telefonoContacto: "",
-                          tipoSoporte: "TECNICO",
-                          horarioInicio: "",
-                          horarioFin: "",
-                          diasDisponibles: "",
-                          observaciones: "",
-                        });
-                      }}
+                      onClick={handleCancelarEdicion}
                       variant="outline"
                       className="flex-1"
                     >
@@ -1503,6 +1596,24 @@ export default function LicitacionDetailPage() {
                               </div>
                             )}
                           </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditarSoporte(soporte)}
+                            className="border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEliminarSoporte(soporte.id)}
+                            className="border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>

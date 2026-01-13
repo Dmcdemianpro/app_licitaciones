@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -93,6 +93,36 @@ export default function TicketsPage() {
 
   const formatDate = (value: string) =>
     new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(new Date(value));
+
+  // Calcular minutos transcurridos desde la creación del ticket
+  const getElapsedMinutes = (createdAt: string): number => {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now.getTime() - created.getTime();
+    return Math.floor(diffMs / (1000 * 60)); // Convertir a minutos
+  };
+
+  // Obtener color del semáforo basado en tiempo transcurrido
+  const getTimeIndicatorColor = (minutes: number): "green" | "yellow" | "red" => {
+    if (minutes <= 30) return "green";
+    if (minutes <= 60) return "yellow";
+    return "red";
+  };
+
+  // Formatear tiempo transcurrido de forma legible
+  const formatElapsedTime = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours < 24) {
+      return `${hours}h ${remainingMinutes}m`;
+    }
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days}d ${remainingHours}h`;
+  };
 
   const handleFinalizarTicket = async (ticketId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar navegar al detalle
@@ -245,6 +275,7 @@ export default function TicketsPage() {
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Tipo</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Prioridad</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Estado</TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white">Tiempo Abierto</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Asignado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Creado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Actualizado</TableHead>
@@ -266,6 +297,27 @@ export default function TicketsPage() {
                             <Badge variant={getStatusColor(ticket.status)}>
                               {statusLabels[ticket.status]}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {ticket.status !== "FINALIZADO" && (() => {
+                              const minutes = getElapsedMinutes(ticket.createdAt);
+                              const color = getTimeIndicatorColor(minutes);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-3 w-3 rounded-full ${
+                                    color === "green" ? "bg-green-500" :
+                                    color === "yellow" ? "bg-yellow-500" :
+                                    "bg-red-500"
+                                  }`} />
+                                  <span className="text-sm text-slate-600 dark:text-slate-200">
+                                    {formatElapsedTime(minutes)}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                            {ticket.status === "FINALIZADO" && (
+                              <span className="text-sm text-slate-400">Finalizado</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{ticket.assignee || "Sin asignar"}</TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.createdAt)}</TableCell>
