@@ -74,7 +74,7 @@ export default function UsuariosPage() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+    if (!(session?.user as any)?.role || (session.user as any).role !== 'ADMIN') {
       alert('Solo los administradores pueden eliminar usuarios');
       return;
     }
@@ -100,8 +100,8 @@ export default function UsuariosPage() {
     }
   };
 
-  const isAdmin = session?.user?.role === 'ADMIN';
-  const canManageUsers = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERVISOR';
+  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const canManageUsers = (session?.user as any)?.role === 'ADMIN' || (session?.user as any)?.role === 'SUPERVISOR';
 
   if (loading) {
     return (

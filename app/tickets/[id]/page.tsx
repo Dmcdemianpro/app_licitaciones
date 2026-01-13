@@ -313,7 +313,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               Volver
             </Link>
           </Button>
-          {session?.user?.role === "ADMIN" && (
+          {(session?.user as any)?.role === "ADMIN" && (
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(true)}
