@@ -74,7 +74,7 @@ export default function UsuariosPage() {
   };
 
   const handleDelete = async (userId: string, userName: string) => {
-    if (!(session?.user as any)?.role || (session.user as any).role !== 'ADMIN') {
+    if (!(session?.user as any)?.role || (session?.user as any).role !== 'ADMIN') {
       alert('Solo los administradores pueden eliminar usuarios');
       return;
     }
