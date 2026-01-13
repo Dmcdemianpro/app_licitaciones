@@ -54,32 +54,13 @@ export default {
   },
   callbacks: {
     async jwt({ token, user }: any) {
-      // Obtener la versión actual de la aplicación
-      const currentAppVersion = process.env.APP_VERSION || "1.0.0";
-
       if (user) {
-        // Nuevo login: agregar información del usuario y versión
         token.id = user.id;
         token.role = user.role;
-        token.appVersion = currentAppVersion;
-      } else {
-        // Sesión existente: validar versión
-        // Si la versión no coincide, invalidar el token
-        if (token.appVersion !== currentAppVersion) {
-          console.log(`Session invalidated: version mismatch (token: ${token.appVersion}, current: ${currentAppVersion})`);
-          // Retornar un token vacío para forzar re-autenticación
-          return {};
-        }
       }
-
       return token;
     },
     async session({ session, token }: any) {
-      // Si el token está vacío (invalidado), retornar sesión nula
-      if (!token.id) {
-        return null as any;
-      }
-
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
