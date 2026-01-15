@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { ticketUpdateSchema } from "@/lib/validations/tickets";
 
 export async function GET(
   req: Request,
@@ -41,6 +42,13 @@ export async function GET(
       );
     }
 
+    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+      return NextResponse.json(
+        { error: "No tienes permisos para ver este ticket" },
+        { status: 403 }
+      );
+    }
+
     // Agregar folioFormateado
     const ticketConFolio = {
       ...ticket,
@@ -68,6 +76,14 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    if (!["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) {
+      return NextResponse.json(
+        { error: "No tienes permisos para editar tickets" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     // Obtener el ticket actual antes de actualizar (para auditoría)
@@ -82,10 +98,57 @@ export async function PATCH(
       );
     }
 
+    const allowedFields = [
+      "title",
+      "description",
+      "type",
+      "priority",
+      "status",
+      "assignee",
+      "assigneeId",
+    ];
+
+    const updateData: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(body, field)) {
+        updateData[field] = body[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No hay cambios para actualizar" },
+        { status: 400 }
+      );
+    }
+
+    const legacyStatusMap: Record<string, string> = {
+      ABIERTO: "CREADO",
+      EN_PROGRESO: "INICIADO",
+      RESUELTO: "FINALIZADO",
+      CERRADO: "FINALIZADO",
+    };
+
+    if (typeof updateData.status === "string" && legacyStatusMap[updateData.status]) {
+      updateData.status = legacyStatusMap[updateData.status];
+    }
+
+    if (typeof updateData.assignee === "string") {
+      updateData.assignee = updateData.assignee.trim() || null;
+    }
+
+    const parsed = ticketUpdateSchema.safeParse(updateData);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     // Actualizar el ticket
     const ticket = await prisma.ticket.update({
       where: { id },
-      data: body,
+      data: parsed.data,
       include: {
         owner: {
           select: {
@@ -106,11 +169,11 @@ export async function PATCH(
 
     // Registrar cambios en auditoría
     const cambios: Record<string, { anterior: any; nuevo: any }> = {};
-    Object.keys(body).forEach((key) => {
-      if (ticketAnterior[key as keyof typeof ticketAnterior] !== body[key]) {
+    Object.keys(parsed.data).forEach((key) => {
+      if (ticketAnterior[key as keyof typeof ticketAnterior] !== parsed.data[key as keyof typeof parsed.data]) {
         cambios[key] = {
           anterior: ticketAnterior[key as keyof typeof ticketAnterior],
-          nuevo: body[key],
+          nuevo: parsed.data[key as keyof typeof parsed.data],
         };
       }
     });

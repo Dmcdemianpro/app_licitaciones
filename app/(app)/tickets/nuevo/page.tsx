@@ -64,7 +64,7 @@ export default function NuevoTicketPage() {
   const onSubmit = async (data: FormData) => {
     const payload = {
       ...data,
-      status: data.status ?? "ABIERTO",
+      status: data.status ?? "CREADO",
       assignee: data.assignee?.trim() || null,
     };
 

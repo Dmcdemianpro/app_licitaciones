@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,8 @@ export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Ticket["status"]>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | Ticket["priority"]>("all");
+  const { data: session } = useSession();
+  const canEdit = ["ADMIN", "SUPERVISOR"].includes(session?.user?.role ?? "");
 
   const { data, error, isLoading, mutate } = useSWR<Ticket[]>("/api/tickets", fetcher, {
     refreshInterval: 12_000,
@@ -129,6 +132,11 @@ export default function TicketsPage() {
 
   const handleFinalizarTicket = async (ticketId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar navegar al detalle
+
+    if (!canEdit) {
+      toast.error("No tienes permisos para finalizar tickets");
+      return;
+    }
 
     if (!confirm("¿Estás seguro de finalizar este ticket?")) {
       return;
@@ -326,7 +334,7 @@ export default function TicketsPage() {
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.createdAt)}</TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.updatedAt)}</TableCell>
                           <TableCell className="text-right">
-                            {ticket.status !== "FINALIZADO" && (
+                            {canEdit && ticket.status !== "FINALIZADO" && (
                               <Button
                                 variant="outline"
                                 size="sm"

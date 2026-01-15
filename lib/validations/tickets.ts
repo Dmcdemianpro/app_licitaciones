@@ -2,10 +2,10 @@ import { z } from "zod";
 import { TICKET_STATUS, TICKET_PRIORITY } from "@/lib/constants";
 
 const statusEnum = z.enum([
-  TICKET_STATUS.ABIERTO,
-  TICKET_STATUS.EN_PROGRESO,
-  TICKET_STATUS.RESUELTO,
-  TICKET_STATUS.CERRADO,
+  TICKET_STATUS.CREADO,
+  TICKET_STATUS.ASIGNADO,
+  TICKET_STATUS.INICIADO,
+  TICKET_STATUS.FINALIZADO,
 ]);
 
 const priorityEnum = z.enum([
@@ -21,10 +21,11 @@ const baseTicketSchema = z.object({
   priority: priorityEnum,
   status: statusEnum.optional(),
   assignee: z.string().max(255).optional().nullable(),
+  assigneeId: z.string().max(100).optional().nullable(),
 });
 
 export const ticketCreateSchema = baseTicketSchema.extend({
-  status: statusEnum.default(TICKET_STATUS.ABIERTO),
+  status: statusEnum.default(TICKET_STATUS.CREADO),
 });
 
 export const ticketUpdateSchema = baseTicketSchema.partial();

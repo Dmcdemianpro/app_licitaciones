@@ -114,6 +114,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const router = useRouter();
   const { data: session } = useSession();
+  const role = (session?.user as any)?.role;
+  const canEdit = role === "ADMIN" || role === "SUPERVISOR";
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,8 +141,17 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   );
 
   // Users for assignment
-  const { data: usersData } = useSWR("/api/usuarios", fetcher);
+  const { data: usersData } = useSWR(canEdit ? "/api/usuarios" : null, fetcher);
   const [assigningUser, setAssigningUser] = useState(false);
+  const [editValues, setEditValues] = useState({
+    title: "",
+    description: "",
+    type: "",
+    priority: "MEDIA",
+    status: "CREADO",
+    assignee: "",
+  });
+  const [savingEdits, setSavingEdits] = useState(false);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -161,7 +172,24 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     fetchTicket();
   }, [id]);
 
+  useEffect(() => {
+    if (!ticket) return;
+    setEditValues({
+      title: ticket.title ?? "",
+      description: ticket.description ?? "",
+      type: ticket.type ?? "",
+      priority: ticket.priority ?? "MEDIA",
+      status: ticket.status ?? "CREADO",
+      assignee: ticket.assignee ?? "",
+    });
+  }, [ticket]);
+
   const handleChangeStatus = async (newStatus: string) => {
+    if (!canEdit) {
+      alert("No tienes permisos para cambiar el estado");
+      return;
+    }
+
     if (!confirm(`¿Estás seguro de cambiar el estado a ${statusLabels[newStatus]}?`)) {
       return;
     }
@@ -181,6 +209,42 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       }
     } catch (err) {
       alert("Error al actualizar el estado");
+    }
+  };
+
+  const handleSaveEdits = async () => {
+    if (!canEdit) {
+      alert("No tienes permisos para editar este ticket");
+      return;
+    }
+
+    setSavingEdits(true);
+    try {
+      const payload = {
+        title: editValues.title.trim(),
+        description: editValues.description.trim(),
+        type: editValues.type.trim(),
+        priority: editValues.priority,
+        status: editValues.status,
+        assignee: editValues.assignee.trim() || null,
+      };
+
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setTicket(data.ticket);
+      } else {
+        alert(data.error || "No se pudo actualizar el ticket");
+      }
+    } catch (err) {
+      alert("Error al actualizar el ticket");
+    } finally {
+      setSavingEdits(false);
     }
   };
 
@@ -227,6 +291,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   };
 
   const handleAssignUser = async (userId: string) => {
+    if (!canEdit) {
+      alert("No tienes permisos para asignar tickets");
+      return;
+    }
+
     setAssigningUser(true);
     try {
       const actualUserId = userId === "UNASSIGNED" ? null : userId;
@@ -375,6 +444,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       variant="outline"
                       size="sm"
                       onClick={() => handleChangeStatus("ASIGNADO")}
+                      disabled={!canEdit}
                       className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
                     >
                       <UserCheck className="mr-2 h-4 w-4" />
@@ -386,6 +456,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       variant="outline"
                       size="sm"
                       onClick={() => handleChangeStatus("INICIADO")}
+                      disabled={!canEdit}
                       className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
                     >
                       <PlayCircle className="mr-2 h-4 w-4" />
@@ -397,6 +468,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       variant="outline"
                       size="sm"
                       onClick={() => handleChangeStatus("FINALIZADO")}
+                      disabled={!canEdit}
                       className="border-green-500/30 text-green-300 hover:bg-green-500/10"
                     >
                       <CheckCircle className="mr-2 h-4 w-4" />
@@ -413,6 +485,94 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               </div>
             </CardContent>
           </Card>
+
+          {canEdit && (
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-lg">Editar ticket</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Actualiza la informacion del ticket
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Titulo</Label>
+                  <Input
+                    value={editValues.title}
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, title: e.target.value }))}
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Descripcion</Label>
+                  <Textarea
+                    value={editValues.description}
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Input
+                    value={editValues.type}
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, type: e.target.value }))}
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Prioridad</Label>
+                  <Select
+                    value={editValues.priority}
+                    onValueChange={(value) => setEditValues((prev) => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="Prioridad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALTA">Alta</SelectItem>
+                      <SelectItem value="MEDIA">Media</SelectItem>
+                      <SelectItem value="BAJA">Baja</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={editValues.status}
+                    onValueChange={(value) => setEditValues((prev) => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CREADO">Creado</SelectItem>
+                      <SelectItem value="ASIGNADO">Asignado</SelectItem>
+                      <SelectItem value="INICIADO">Iniciado</SelectItem>
+                      <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Responsable (texto)</Label>
+                  <Input
+                    value={editValues.assignee}
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, assignee: e.target.value }))}
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <Button
+                    onClick={handleSaveEdits}
+                    disabled={savingEdits}
+                    className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
+                  >
+                    {savingEdits ? "Guardando..." : "Guardar cambios"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Creador y Asignado */}
           <div className="grid gap-6 md:grid-cols-2">
@@ -454,7 +614,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   <Select
                     value={ticket.assignedTo?.id || ""}
                     onValueChange={handleAssignUser}
-                    disabled={assigningUser || !usersData?.users}
+                    disabled={!canEdit || assigningUser || !usersData?.users}
                   >
                     <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder={assigningUser ? "Asignando..." : "Seleccionar usuario"} />

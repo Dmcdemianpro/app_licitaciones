@@ -6,10 +6,19 @@ import { ticketCreateSchema } from "@/lib/validations/tickets";
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    }
+
+    const isTechnician = session.user.role === "USER";
+    const where = {
+      deletedAt: null,
+      ...(isTechnician ? { assigneeId: session.user.id } : {}),
+    };
+
     const tickets = await prisma.ticket.findMany({
-      where: {
-        deletedAt: null, // Solo tickets no eliminados
-      },
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         owner: { select: { id: true, name: true, email: true } },
@@ -56,8 +65,9 @@ export async function POST(req: Request) {
         description: parsed.data.description,
         type: parsed.data.type,
         priority: parsed.data.priority,
-        status: parsed.data.status ?? "ABIERTO",
+        status: parsed.data.status ?? "CREADO",
         assignee: parsed.data.assignee?.trim() || null,
+        assigneeId: parsed.data.assigneeId ?? null,
         ownerId: session.user.id,
       },
     });

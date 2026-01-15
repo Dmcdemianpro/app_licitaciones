@@ -14,10 +14,10 @@ export type UserRole = typeof ROLES[keyof typeof ROLES]
 
 // Estados de Ticket
 export const TICKET_STATUS = {
-  ABIERTO: 'ABIERTO',
-  EN_PROGRESO: 'EN_PROGRESO',
-  RESUELTO: 'RESUELTO',
-  CERRADO: 'CERRADO',
+  CREADO: 'CREADO',
+  ASIGNADO: 'ASIGNADO',
+  INICIADO: 'INICIADO',
+  FINALIZADO: 'FINALIZADO',
 } as const
 
 export type TicketStatus = typeof TICKET_STATUS[keyof typeof TICKET_STATUS]

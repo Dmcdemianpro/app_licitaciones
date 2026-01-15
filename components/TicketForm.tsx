@@ -33,7 +33,7 @@ export default function TicketForm({ defaultValues, ticketId }: Props) {
     resolver: zodResolver(ticketId ? ticketUpdateSchema : ticketCreateSchema),
     defaultValues: {
       priority: "MEDIA",
-      status: "ABIERTO",
+      status: "CREADO",
       ...defaultValues,
     },
   });

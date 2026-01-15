@@ -14,6 +14,25 @@ export async function GET(
 
     const { id } = await params;
 
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, deletedAt: null },
+      select: { assigneeId: true },
+    });
+
+    if (!ticket) {
+      return NextResponse.json(
+        { error: "Ticket no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+      return NextResponse.json(
+        { error: "No tienes permisos para ver las notas de este ticket" },
+        { status: 403 }
+      );
+    }
+
     const notas = await prisma.nota.findMany({
       where: { ticketId: id },
       include: {
@@ -51,6 +70,26 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, deletedAt: null },
+      select: { assigneeId: true },
+    });
+
+    if (!ticket) {
+      return NextResponse.json(
+        { error: "Ticket no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+      return NextResponse.json(
+        { error: "No tienes permisos para agregar notas a este ticket" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     if (!body.contenido || body.contenido.trim() === "") {
