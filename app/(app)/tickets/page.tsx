@@ -53,7 +53,8 @@ export default function TicketsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | Ticket["status"]>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | Ticket["priority"]>("all");
   const { data: session } = useSession();
-  const canEdit = ["ADMIN", "SUPERVISOR"].includes(session?.user?.role ?? "");
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  const canEdit = ["ADMIN", "SUPERVISOR"].includes(role ?? "");
 
   const { data, error, isLoading, mutate } = useSWR<Ticket[]>("/api/tickets", fetcher, {
     refreshInterval: 12_000,
