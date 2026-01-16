@@ -122,7 +122,7 @@ async function main() {
       description: "Se necesita un reporte mensual de licitaciones adjudicadas con filtros por fecha y monto.",
       type: "Feature Request",
       priority: "MEDIA",
-      status: "INICIADO",
+      status: "EN_PROGRESO",
       assignee: "Pedro Rojas",
       ownerId: manager.id,
     },

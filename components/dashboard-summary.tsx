@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import useSWR from "swr";
-import { Calendar, CheckCircle, Gavel, Ticket as TicketIcon, TrendingUp } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle, Gavel, Ticket as TicketIcon, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,12 @@ const fetcher = async (url: string) => {
 const statusLabels: Record<string, string> = {
   CREADO: "Creado",
   ASIGNADO: "Asignado",
-  INICIADO: "En progreso",
-  FINALIZADO: "Finalizado",
-  ABIERTO: "Abierto",
   EN_PROGRESO: "En progreso",
+  PENDIENTE_VALIDACION: "Pendiente de validacion",
+  FINALIZADO: "Finalizado",
+  REABIERTO: "Reabierto",
+  ABIERTO: "Abierto",
+  INICIADO: "En progreso",
   RESUELTO: "Resuelto",
   CERRADO: "Cerrado",
 };
@@ -80,6 +82,15 @@ export default function DashboardSummary({ initialSummary }: Props) {
       percent: percentOfTotal(summary.totals.inProgress),
     },
     {
+      title: "Pendiente de validacion",
+      value: summary.totals.pendingValidation,
+      description: "Listos para revisar",
+      icon: AlertCircle,
+      accent: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+      bar: "from-amber-400 to-amber-600",
+      percent: percentOfTotal(summary.totals.pendingValidation),
+    },
+    {
       title: "Finalizados",
       value: summary.totals.finished,
       description: "Resueltos o cerrados",
@@ -113,7 +124,7 @@ export default function DashboardSummary({ initialSummary }: Props) {
         <span className="text-slate-500 dark:text-slate-400">Actualizado {lastUpdate}</span>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat, index) => (
           <Card
             key={stat.title}

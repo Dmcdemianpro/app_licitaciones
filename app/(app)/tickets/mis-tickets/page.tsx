@@ -21,7 +21,7 @@ type Ticket = {
   description?: string | null;
   type: string;
   priority: "ALTA" | "MEDIA" | "BAJA";
-  status: "CREADO" | "ASIGNADO" | "INICIADO" | "FINALIZADO";
+  status: "CREADO" | "ASIGNADO" | "EN_PROGRESO" | "PENDIENTE_VALIDACION" | "FINALIZADO" | "REABIERTO";
   assignee?: string | null;
   assignedTo?: {
     id: string;
@@ -46,8 +46,10 @@ const fetcher = async (url: string) => {
 const statusLabels: Record<Ticket["status"], string> = {
   CREADO: "Creado",
   ASIGNADO: "Asignado",
-  INICIADO: "Iniciado",
+  EN_PROGRESO: "En progreso",
+  PENDIENTE_VALIDACION: "Pendiente de validacion",
   FINALIZADO: "Finalizado",
+  REABIERTO: "Reabierto",
 };
 
 const priorityLabels: Record<Ticket["priority"], string> = {
@@ -56,9 +58,11 @@ const priorityLabels: Record<Ticket["priority"], string> = {
   BAJA: "Baja",
 };
 
+type StatusFilter = "all" | "pending" | Ticket["status"];
+
 export default function MisTicketsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | Ticket["status"]>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
   const [priorityFilter, setPriorityFilter] = useState<"all" | Ticket["priority"]>("all");
 
   const { data, error, isLoading, mutate } = useSWR<Ticket[]>("/api/tickets/mis-tickets", fetcher, {
@@ -72,7 +76,11 @@ export default function MisTicketsPage() {
         ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.folioFormateado.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "pending" &&
+          ["ASIGNADO", "EN_PROGRESO", "REABIERTO"].includes(ticket.status)) ||
+        ticket.status === statusFilter;
       const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter;
       return matchesSearch && matchesStatus && matchesPriority;
     });
@@ -95,8 +103,12 @@ export default function MisTicketsPage() {
         return "destructive";
       case "ASIGNADO":
         return "default";
-      case "INICIADO":
+      case "EN_PROGRESO":
         return "secondary";
+      case "PENDIENTE_VALIDACION":
+        return "outline";
+      case "REABIERTO":
+        return "destructive";
       case "FINALIZADO":
       default:
         return "outline";
@@ -149,11 +161,11 @@ export default function MisTicketsPage() {
 
             <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Iniciados</CardTitle>
+                <CardTitle className="text-sm font-medium">En progreso</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.filter((t) => t.status === "INICIADO").length || 0}
+                  {data?.filter((t) => t.status === "EN_PROGRESO").length || 0}
                 </div>
               </CardContent>
             </Card>
@@ -206,10 +218,13 @@ export default function MisTicketsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
                     <SelectItem value="CREADO">Creado</SelectItem>
                     <SelectItem value="ASIGNADO">Asignado</SelectItem>
-                    <SelectItem value="INICIADO">Iniciado</SelectItem>
+                    <SelectItem value="EN_PROGRESO">En progreso</SelectItem>
+                    <SelectItem value="PENDIENTE_VALIDACION">Pendiente de validacion</SelectItem>
                     <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                    <SelectItem value="REABIERTO">Reabierto</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as any)}>

@@ -42,8 +42,10 @@ import useSWR from "swr";
 const statusLabels: Record<string, string> = {
   CREADO: "Creado",
   ASIGNADO: "Asignado",
-  INICIADO: "Iniciado",
+  EN_PROGRESO: "En progreso",
+  PENDIENTE_VALIDACION: "Pendiente de validacion",
   FINALIZADO: "Finalizado",
+  REABIERTO: "Reabierto",
 };
 
 const priorityLabels: Record<string, string> = {
@@ -58,10 +60,14 @@ const getStatusColor = (status: string) => {
       return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
     case "ASIGNADO":
       return "bg-blue-500/20 text-blue-300 border-blue-500/30";
-    case "INICIADO":
+    case "EN_PROGRESO":
       return "bg-purple-500/20 text-purple-300 border-purple-500/30";
+    case "PENDIENTE_VALIDACION":
+      return "bg-amber-500/20 text-amber-300 border-amber-500/30";
     case "FINALIZADO":
       return "bg-green-500/20 text-green-300 border-green-500/30";
+    case "REABIERTO":
+      return "bg-red-500/20 text-red-300 border-red-500/30";
     default:
       return "bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/30";
   }
@@ -152,6 +158,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     assignee: "",
   });
   const [savingEdits, setSavingEdits] = useState(false);
+  const isAssignee = ticket?.assignedTo?.id === session?.user?.id;
+  const canWork = role === "USER" && isAssignee;
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -185,8 +193,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   }, [ticket]);
 
   const handleChangeStatus = async (newStatus: string) => {
-    if (!canEdit) {
+    const isAssignee = ticket?.assignedTo?.id === session?.user?.id;
+    const isUserAction = role === "USER";
+    const canWork = isUserAction && isAssignee;
+
+    if (isUserAction && !canWork) {
       alert("No tienes permisos para cambiar el estado");
+      return;
+    }
+
+    if (!isUserAction && !canEdit) {
+      alert("No tienes permisos para cambiar el estado");
+      return;
+    }
+
+    if (isUserAction && !["EN_PROGRESO", "PENDIENTE_VALIDACION"].includes(newStatus)) {
+      alert("No puedes mover el ticket a ese estado");
       return;
     }
 
@@ -299,12 +321,14 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     setAssigningUser(true);
     try {
       const actualUserId = userId === "UNASSIGNED" ? null : userId;
+      const shouldAssign =
+        actualUserId && ["CREADO", "REABIERTO"].includes(ticket?.status ?? "");
       const res = await fetch(`/api/tickets/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assigneeId: actualUserId,
-          status: actualUserId && ticket?.status === "CREADO" ? "ASIGNADO" : ticket?.status
+          status: shouldAssign ? "ASIGNADO" : ticket?.status
         }),
       });
 
@@ -439,41 +463,61 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <div className="border-t border-slate-200 dark:border-white/10 pt-4">
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">Cambiar estado</p>
                 <div className="flex flex-wrap gap-2">
-                  {ticket.status === "CREADO" && (
+                  {canEdit && ticket.status === "CREADO" && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleChangeStatus("ASIGNADO")}
-                      disabled={!canEdit}
+                      disabled={!ticket.assignedTo}
                       className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
                     >
                       <UserCheck className="mr-2 h-4 w-4" />
                       Asignar
                     </Button>
                   )}
-                  {ticket.status === "ASIGNADO" && (
+                  {canWork && (ticket.status === "ASIGNADO" || ticket.status === "REABIERTO") && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleChangeStatus("INICIADO")}
-                      disabled={!canEdit}
+                      onClick={() => handleChangeStatus("EN_PROGRESO")}
                       className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10"
                     >
                       <PlayCircle className="mr-2 h-4 w-4" />
-                      Iniciar
+                      Iniciar trabajo
                     </Button>
                   )}
-                  {ticket.status === "INICIADO" && (
+                  {canWork && ticket.status === "EN_PROGRESO" && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleChangeStatus("FINALIZADO")}
-                      disabled={!canEdit}
-                      className="border-green-500/30 text-green-300 hover:bg-green-500/10"
+                      onClick={() => handleChangeStatus("PENDIENTE_VALIDACION")}
+                      className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
                     >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Finalizar
+                      <Send className="mr-2 h-4 w-4" />
+                      Enviar a revision
                     </Button>
+                  )}
+                  {canEdit && ticket.status === "PENDIENTE_VALIDACION" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleChangeStatus("FINALIZADO")}
+                        className="border-green-500/30 text-green-300 hover:bg-green-500/10"
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Aprobar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleChangeStatus("REABIERTO")}
+                        className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+                      >
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        Reabrir
+                      </Button>
+                    </>
                   )}
                   {ticket.status === "FINALIZADO" && (
                     <div className="flex items-center gap-2 text-sm text-green-300">
@@ -548,8 +592,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                     <SelectContent>
                       <SelectItem value="CREADO">Creado</SelectItem>
                       <SelectItem value="ASIGNADO">Asignado</SelectItem>
-                      <SelectItem value="INICIADO">Iniciado</SelectItem>
+                      <SelectItem value="EN_PROGRESO">En progreso</SelectItem>
+                      <SelectItem value="PENDIENTE_VALIDACION">Pendiente de validacion</SelectItem>
                       <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                      <SelectItem value="REABIERTO">Reabierto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -633,12 +679,12 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             </Card>
           </div>
 
-          {/* Notas */}
+          {/* Bitacora */}
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-indigo-400" />
-                Notas
+                Bitacora
               </CardTitle>
               <CardDescription className="text-slate-300">
                 Agrega notas sobre el progreso o solución del ticket
@@ -648,7 +694,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               <div className="space-y-2">
                 <Textarea
                   className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
-                  placeholder="Escribe una nota..."
+                  placeholder="Escribe un avance..."
                   rows={3}
                   value={notaContenido}
                   onChange={(e) => setNotaContenido(e.target.value)}
@@ -675,7 +721,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                   className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {submittingNota ? "Guardando..." : "Agregar nota"}
+                  {submittingNota ? "Guardando..." : "Agregar avance"}
                 </Button>
               </div>
 

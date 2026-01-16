@@ -76,17 +76,13 @@ export async function PATCH(
     }
 
     const { id } = await params;
-
-    if (!["ADMIN", "SUPERVISOR"].includes(session.user.role as string)) {
-      return NextResponse.json(
-        { error: "No tienes permisos para editar tickets" },
-        { status: 403 }
-      );
-    }
+    const role = session.user.role as string;
+    const isManager = ["ADMIN", "SUPERVISOR"].includes(role);
+    const isUser = role === "USER";
 
     const body = await req.json();
 
-    // Obtener el ticket actual antes de actualizar (para auditoría)
+    // Obtener el ticket actual antes de actualizar (para auditoria)
     const ticketAnterior = await prisma.ticket.findUnique({
       where: { id },
     });
@@ -98,15 +94,19 @@ export async function PATCH(
       );
     }
 
-    const allowedFields = [
-      "title",
-      "description",
-      "type",
-      "priority",
-      "status",
-      "assignee",
-      "assigneeId",
-    ];
+    const allowedFields = isManager
+      ? ["title", "description", "type", "priority", "status", "assignee", "assigneeId"]
+      : ["status"];
+
+    if (isUser) {
+      const disallowed = Object.keys(body).filter((field) => !allowedFields.includes(field));
+      if (disallowed.length > 0) {
+        return NextResponse.json(
+          { error: "No tienes permisos para editar estos campos" },
+          { status: 403 }
+        );
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
     for (const field of allowedFields) {
@@ -124,7 +124,8 @@ export async function PATCH(
 
     const legacyStatusMap: Record<string, string> = {
       ABIERTO: "CREADO",
-      EN_PROGRESO: "INICIADO",
+      EN_PROGRESO: "EN_PROGRESO",
+      INICIADO: "EN_PROGRESO",
       RESUELTO: "FINALIZADO",
       CERRADO: "FINALIZADO",
     };
@@ -137,12 +138,86 @@ export async function PATCH(
       updateData.assignee = updateData.assignee.trim() || null;
     }
 
+    if (
+      isManager &&
+      updateData.assigneeId &&
+      !updateData.status &&
+      ticketAnterior.status === "CREADO"
+    ) {
+      updateData.status = "ASIGNADO";
+    }
+
     const parsed = ticketUpdateSchema.safeParse(updateData);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Datos inválidos", issues: parsed.error.flatten() },
+        { error: "Datos invalidos", issues: parsed.error.flatten() },
         { status: 400 }
       );
+    }
+
+    const currentStatus = ticketAnterior.status;
+    const nextStatus = parsed.data.status as string | undefined;
+
+    if (isUser) {
+      const isAssignee = ticketAnterior.assigneeId === session.user.id;
+      if (!isAssignee) {
+        return NextResponse.json(
+          { error: "No tienes permisos para editar este ticket" },
+          { status: 403 }
+        );
+      }
+
+      if (!nextStatus) {
+        return NextResponse.json(
+          { error: "Debes indicar un estado" },
+          { status: 400 }
+        );
+      }
+
+      const allowedUserTransition =
+        ((currentStatus === "ASIGNADO" || currentStatus === "REABIERTO") && nextStatus === "EN_PROGRESO") ||
+        (currentStatus === "EN_PROGRESO" && nextStatus === "PENDIENTE_VALIDACION");
+
+      if (!allowedUserTransition) {
+        return NextResponse.json(
+          { error: "Transicion de estado no permitida para tu rol" },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (isManager && nextStatus) {
+      if (nextStatus === "EN_PROGRESO" || nextStatus === "PENDIENTE_VALIDACION") {
+        return NextResponse.json(
+          { error: "Solo el responsable puede cambiar a este estado" },
+          { status: 403 }
+        );
+      }
+
+      if (nextStatus === "ASIGNADO") {
+        const nextAssignee = (parsed.data.assigneeId as string | null | undefined) ?? ticketAnterior.assigneeId;
+        if (!nextAssignee) {
+          return NextResponse.json(
+            { error: "Debes asignar un responsable antes de asignar el ticket" },
+            { status: 400 }
+          );
+        }
+        if (!["CREADO", "REABIERTO", "ASIGNADO"].includes(currentStatus)) {
+          return NextResponse.json(
+            { error: "No puedes asignar desde el estado actual" },
+            { status: 400 }
+          );
+        }
+      }
+
+      if (nextStatus === "FINALIZADO" || nextStatus === "REABIERTO") {
+        if (currentStatus !== "PENDIENTE_VALIDACION") {
+          return NextResponse.json(
+            { error: "Solo puedes revisar tickets en validacion" },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // Actualizar el ticket
@@ -167,7 +242,7 @@ export async function PATCH(
       },
     });
 
-    // Registrar cambios en auditoría
+    // Registrar cambios en auditoria
     const cambios: Record<string, { anterior: any; nuevo: any }> = {};
     Object.keys(parsed.data).forEach((key) => {
       if (ticketAnterior[key as keyof typeof ticketAnterior] !== parsed.data[key as keyof typeof parsed.data]) {
@@ -178,7 +253,6 @@ export async function PATCH(
       }
     });
 
-    // Solo guardar en auditoría si hubo cambios
     if (Object.keys(cambios).length > 0) {
       await prisma.auditoriaLog.create({
         data: {
@@ -189,6 +263,53 @@ export async function PATCH(
           userId: session.user.id,
         },
       });
+    }
+
+    if (ticket.assigneeId && ticket.assigneeId !== ticketAnterior.assigneeId) {
+      await prisma.notificacion.create({
+        data: {
+          tipo: "INFO",
+          titulo: "Ticket asignado",
+          mensaje: `Tienes un nuevo ticket asignado: ${ticket.title}`,
+          userId: ticket.assigneeId,
+          referenceType: "TICKET",
+          referenceId: ticket.id,
+        },
+      });
+    }
+
+    if (ticket.status !== ticketAnterior.status) {
+      if (ticket.status === "PENDIENTE_VALIDACION") {
+        const supervisores = await prisma.user.findMany({
+          where: { role: { in: ["SUPERVISOR", "ADMIN"] }, activo: true },
+          select: { id: true },
+        });
+        if (supervisores.length > 0) {
+          await prisma.notificacion.createMany({
+            data: supervisores.map((user) => ({
+              tipo: "INFO",
+              titulo: "Ticket en revision",
+              mensaje: `El ticket ${ticket.title} esta listo para validar`,
+              userId: user.id,
+              referenceType: "TICKET",
+              referenceId: ticket.id,
+            })),
+          });
+        }
+      }
+
+      if (ticket.status === "REABIERTO" && ticket.assigneeId) {
+        await prisma.notificacion.create({
+          data: {
+            tipo: "ADVERTENCIA",
+            titulo: "Ticket reabierto",
+            mensaje: `El ticket ${ticket.title} requiere correcciones`,
+            userId: ticket.assigneeId,
+            referenceType: "TICKET",
+            referenceId: ticket.id,
+          },
+        });
+      }
     }
 
     // Agregar folioFormateado

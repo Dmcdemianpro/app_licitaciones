@@ -90,7 +90,7 @@ model Ticket {
   description       String?   @db.NVarChar(MAX)
   type              String    @db.NVarChar(100)
   priority          String    @default("MEDIA") @db.NVarChar(50) // ALTA, MEDIA, BAJA
-  status            String    @default("CREADO") @db.NVarChar(50) // CREADO, ASIGNADO, INICIADO, FINALIZADO
+  status            String    @default("CREADO") @db.NVarChar(50) // CREADO, ASIGNADO, EN_PROGRESO, PENDIENTE_VALIDACION, FINALIZADO, REABIERTO
   assignee          String?   @db.NVarChar(255)
   assigneeId        String?   @map("assignee_id") @db.NVarChar(100)
   ownerId           String    @map("owner_id") @db.NVarChar(100)

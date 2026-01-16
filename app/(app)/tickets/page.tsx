@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle, Clock } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, Search, TicketPlus, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -23,7 +23,7 @@ type Ticket = {
   description?: string | null;
   type: string;
   priority: "ALTA" | "MEDIA" | "BAJA";
-  status: "CREADO" | "ASIGNADO" | "INICIADO" | "FINALIZADO";
+  status: "CREADO" | "ASIGNADO" | "EN_PROGRESO" | "PENDIENTE_VALIDACION" | "FINALIZADO" | "REABIERTO";
   assignee?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -38,8 +38,10 @@ const fetcher = async (url: string) => {
 const statusLabels: Record<Ticket["status"], string> = {
   CREADO: "Creado",
   ASIGNADO: "Asignado",
-  INICIADO: "Iniciado",
+  EN_PROGRESO: "En progreso",
+  PENDIENTE_VALIDACION: "Pendiente de validacion",
   FINALIZADO: "Finalizado",
+  REABIERTO: "Reabierto",
 };
 
 const priorityLabels: Record<Ticket["priority"], string> = {
@@ -90,8 +92,12 @@ export default function TicketsPage() {
         return "destructive";
       case "ASIGNADO":
         return "default";
-      case "INICIADO":
+      case "EN_PROGRESO":
         return "secondary";
+      case "PENDIENTE_VALIDACION":
+        return "outline";
+      case "REABIERTO":
+        return "destructive";
       case "FINALIZADO":
       default:
         return "outline";
@@ -131,11 +137,11 @@ export default function TicketsPage() {
     return `${days}d ${remainingHours}h`;
   };
 
-  const handleFinalizarTicket = async (ticketId: string, e: React.MouseEvent) => {
+  const handleAprobarTicket = async (ticketId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar navegar al detalle
 
     if (!canEdit) {
-      toast.error("No tienes permisos para finalizar tickets");
+      toast.error("No tienes permisos para aprobar tickets");
       return;
     }
 
@@ -152,7 +158,7 @@ export default function TicketsPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error || "Error al finalizar ticket");
+        toast.error(data.error || "Error al aprobar ticket");
         return;
       }
 
@@ -160,7 +166,7 @@ export default function TicketsPage() {
       mutate(); // Recargar lista de tickets
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Error al finalizar ticket");
+      toast.error("Error al aprobar ticket");
     }
   };
 
@@ -228,8 +234,10 @@ export default function TicketsPage() {
                     <SelectItem value="all">Todos los estados</SelectItem>
                     <SelectItem value="CREADO">Creado</SelectItem>
                     <SelectItem value="ASIGNADO">Asignado</SelectItem>
-                    <SelectItem value="INICIADO">Iniciado</SelectItem>
+                    <SelectItem value="EN_PROGRESO">En progreso</SelectItem>
+                    <SelectItem value="PENDIENTE_VALIDACION">Pendiente de validacion</SelectItem>
                     <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                    <SelectItem value="REABIERTO">Reabierto</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -335,15 +343,15 @@ export default function TicketsPage() {
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.createdAt)}</TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.updatedAt)}</TableCell>
                           <TableCell className="text-right">
-                            {canEdit && ticket.status !== "FINALIZADO" && (
+                            {canEdit && ticket.status === "PENDIENTE_VALIDACION" && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => handleFinalizarTicket(ticket.id, e)}
+                                onClick={(e) => handleAprobarTicket(ticket.id, e)}
                                 className="border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10"
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
-                                Finalizar
+                                Aprobar
                               </Button>
                             )}
                           </TableCell>

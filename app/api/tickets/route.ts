@@ -65,12 +65,33 @@ export async function POST(req: Request) {
         description: parsed.data.description,
         type: parsed.data.type,
         priority: parsed.data.priority,
-        status: parsed.data.status ?? "CREADO",
+        status: "CREADO",
         assignee: parsed.data.assignee?.trim() || null,
         assigneeId: parsed.data.assigneeId ?? null,
         ownerId: session.user.id,
       },
     });
+
+    const supervisores = await prisma.user.findMany({
+      where: {
+        role: { in: ["SUPERVISOR", "ADMIN"] },
+        activo: true,
+      },
+      select: { id: true },
+    });
+
+    if (supervisores.length > 0) {
+      await prisma.notificacion.createMany({
+        data: supervisores.map((user) => ({
+          tipo: "INFO",
+          titulo: "Nuevo ticket creado",
+          mensaje: `Se registro un nuevo ticket: ${ticket.title}`,
+          userId: user.id,
+          referenceType: "TICKET",
+          referenceId: ticket.id,
+        })),
+      });
+    }
 
     // Agregar folioFormateado al ticket creado
     const ticketConFolio = {

@@ -16,8 +16,10 @@ export type UserRole = typeof ROLES[keyof typeof ROLES]
 export const TICKET_STATUS = {
   CREADO: 'CREADO',
   ASIGNADO: 'ASIGNADO',
-  INICIADO: 'INICIADO',
+  EN_PROGRESO: 'EN_PROGRESO',
+  PENDIENTE_VALIDACION: 'PENDIENTE_VALIDACION',
   FINALIZADO: 'FINALIZADO',
+  REABIERTO: 'REABIERTO',
 } as const
 
 export type TicketStatus = typeof TICKET_STATUS[keyof typeof TICKET_STATUS]
