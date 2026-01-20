@@ -25,7 +25,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { formatCLP, formatFolio } from "@/lib/formatters";
+import { EventosTimeline } from "@/components/licitaciones/EventosTimeline";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -1273,6 +1279,9 @@ export default function LicitacionDetailPage() {
             </Card>
           )}
 
+          {/* Timeline de Eventos */}
+          <EventosTimeline licitacionId={id} onEventoCreado={() => mutate()} />
+
           {/* Notas y documentos */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Notas */}
@@ -1280,10 +1289,10 @@ export default function LicitacionDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
                   <MessageSquarePlus className="h-5 w-5" />
-                  Notas y Eventos
+                  Notas
                 </CardTitle>
                 <CardDescription className="text-slate-300">
-                  Registra notas y eventos relacionados con esta licitación
+                  Registra notas rápidas relacionadas con esta licitación
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

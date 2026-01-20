@@ -40,6 +40,7 @@ model User {
   documentosSubidos       Documento[]
   notas                   Nota[]
   auditoriaLogs           AuditoriaLog[]
+  eventosCreados          EventoLicitacion[] @relation("EventoCreatedBy")
 
   @@map("users")
 }
@@ -106,6 +107,7 @@ model Ticket {
   documentos     Documento[]
   notas          Nota[]
   soporteTecnico SoporteTecnico[]
+  eventos        EventoLicitacion[]
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
@@ -225,6 +227,7 @@ model Licitacion {
   items           LicitacionItem[]
   soporteTecnico  SoporteTecnico[]
   adjudicacion    Adjudicacion?
+  eventos         EventoLicitacion[]
 
   @@map("licitaciones")
   @@index([estado], map: "idx_licitacion_estado")
@@ -462,4 +465,52 @@ model SoporteTecnico {
   @@index([citaId], map: "idx_soporte_cita")
   @@index([estado], map: "idx_soporte_estado")
   @@index([tipoSoporte], map: "idx_soporte_tipo")
+}
+
+// Modelo para eventos/trazabilidad de licitaciones
+model EventoLicitacion {
+  id              String    @id @default(cuid()) @db.NVarChar(100)
+  licitacionId    String    @map("licitacion_id") @db.NVarChar(100)
+
+  // Tipo de evento
+  tipoEvento      String    @map("tipo_evento") @db.NVarChar(100)
+  // Tipos: CREACION, ACTUALIZACION, CAMBIO_ESTADO, INCIDENTE, CAIDA_SISTEMA,
+  //        MANTENIMIENTO, VISITA_TECNICA, REUNION, DOCUMENTO_AGREGADO,
+  //        ADJUDICACION, CIERRE, EXTENSION_PLAZO, NOTA, OTRO
+
+  // Información del evento
+  titulo          String    @db.NVarChar(255)
+  descripcion     String?   @db.NVarChar(MAX)
+  importancia     String    @default("MEDIA") @db.NVarChar(50) // CRITICA, ALTA, MEDIA, BAJA, INFO
+
+  // Fechas
+  fechaEvento     DateTime  @map("fecha_evento")
+  fechaResolucion DateTime? @map("fecha_resolucion") // Para incidentes/problemas
+
+  // Referencia opcional a ticket (cuando el evento está vinculado a un ticket)
+  ticketId        String?   @map("ticket_id") @db.NVarChar(100)
+
+  // Datos adicionales (JSON para flexibilidad)
+  metadatos       String?   @db.NVarChar(MAX) // JSON con datos adicionales según tipo
+
+  // Estado del evento (para eventos que requieren seguimiento)
+  estado          String    @default("REGISTRADO") @db.NVarChar(50) // REGISTRADO, EN_PROGRESO, RESUELTO, CERRADO
+
+  // Auditoría
+  creadoPorId     String    @map("creado_por_id") @db.NVarChar(100)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relaciones
+  licitacion      Licitacion @relation(fields: [licitacionId], references: [id], onDelete: Cascade)
+  ticket          Ticket?    @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  creadoPor       User       @relation("EventoCreatedBy", fields: [creadoPorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("eventos_licitacion")
+  @@index([licitacionId], map: "idx_evento_licitacion")
+  @@index([ticketId], map: "idx_evento_ticket")
+  @@index([tipoEvento], map: "idx_evento_tipo")
+  @@index([fechaEvento], map: "idx_evento_fecha")
+  @@index([estado], map: "idx_evento_estado")
+  @@index([importancia], map: "idx_evento_importancia")
 }
