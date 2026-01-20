@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 
 export async function GET(
   req: Request,
@@ -13,6 +14,14 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     const licitacion = await prisma.licitacion.findUnique({
       where: { id },

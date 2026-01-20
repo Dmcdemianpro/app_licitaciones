@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 
 // GET - Obtener todos los eventos de una licitación
 export async function GET(
@@ -15,6 +16,14 @@ export async function GET(
 
     const { id } = await params;
     const { searchParams } = new URL(req.url);
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Parámetros de filtro opcionales
     const tipoEvento = searchParams.get("tipoEvento");
@@ -120,6 +129,14 @@ export async function POST(
       metadatos,
       estado,
     } = body;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Validar campos obligatorios
     if (!tipoEvento || !titulo || !fechaEvento) {

@@ -24,11 +24,27 @@ export default function LicitacionesPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [departamentoId, setDepartamentoId] = useState("all");
+  const [unidadId, setUnidadId] = useState("all");
   const [importando, setImportando] = useState<string | null>(null);
   const [incluirEliminadas, setIncluirEliminadas] = useState(false);
 
   const { data: sessionData } = useSWR("/api/auth/session", fetcher);
   const isAdmin = sessionData?.user?.role === "ADMIN";
+
+  const { data: departamentosData } = useSWR(
+    "/api/departamentos?incluirUnidades=true&soloActivos=true",
+    fetcher
+  );
+  const departamentos = departamentosData?.departamentos ?? [];
+  const unidadesDisponibles = useMemo(() => {
+    if (departamentoId === "all") {
+      return departamentos.flatMap((dep: any) => dep.unidades ?? []);
+    }
+
+    const departamentoSeleccionado = departamentos.find((dep: any) => dep.id === departamentoId);
+    return departamentoSeleccionado?.unidades ?? [];
+  }, [departamentos, departamentoId]);
 
   const estadoParamMap: Record<string, string> = {
     all: "todos",
@@ -68,9 +84,11 @@ export default function LicitacionesPage() {
   const filteredLicitacionesGuardadas = useMemo(() => {
     return licitacionesGuardadas.filter((licitacion: any) => {
       const matchesStatus = statusFilter === "all" || licitacion.estado === statusFilter;
-      return matchesStatus;
+      const matchesDepartamento = departamentoId === "all" || licitacion.departamentoId === departamentoId;
+      const matchesUnidad = unidadId === "all" || licitacion.unidadId === unidadId;
+      return matchesStatus && matchesDepartamento && matchesUnidad;
     });
-  }, [licitacionesGuardadas, statusFilter]);
+  }, [licitacionesGuardadas, statusFilter, departamentoId, unidadId]);
 
   const filteredLicitacionesBusqueda = useMemo(() => {
     return licitacionesBusqueda.filter((licitacion: any) => {
@@ -105,13 +123,35 @@ export default function LicitacionesPage() {
     return "text-emerald-300";
   };
 
+  const handleDepartamentoFilterChange = (value: string) => {
+    setDepartamentoId(value);
+
+    if (value === "all") {
+      setUnidadId("all");
+      return;
+    }
+
+    const departamentoSeleccionado = departamentos.find((dep: any) => dep.id === value);
+    const unidades = departamentoSeleccionado?.unidades ?? [];
+    if (unidadId !== "all" && !unidades.some((unidad: any) => unidad.id === unidadId)) {
+      setUnidadId("all");
+    }
+  };
+
   const handleImportar = async (licitacion: any) => {
     setImportando(licitacion.id);
     try {
+      const departamentoValue = departamentoId !== "all" ? departamentoId : undefined;
+      const unidadValue = unidadId !== "all" ? unidadId : undefined;
+
       const res = await fetch("/api/licitaciones/importar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rawData: licitacion.rawData }),
+        body: JSON.stringify({
+          rawData: licitacion.rawData,
+          departamentoId: departamentoValue,
+          unidadId: unidadValue,
+        }),
       });
 
       const data = await res.json();
@@ -242,7 +282,7 @@ export default function LicitacionesPage() {
                       Licitaciones guardadas en el sistema
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {isAdmin && (
                       <div className="flex items-center gap-2">
                         <Checkbox
@@ -266,6 +306,32 @@ export default function LicitacionesPage() {
                         <SelectItem value="ADJUDICADA">Adjudicada</SelectItem>
                         <SelectItem value="DESIERTA">Desierta</SelectItem>
                         <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={departamentoId} onValueChange={handleDepartamentoFilterChange}>
+                      <SelectTrigger className="w-[220px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los departamentos</SelectItem>
+                        {departamentos.map((dep: any) => (
+                          <SelectItem key={dep.id} value={dep.id}>
+                            {dep.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={unidadId} onValueChange={setUnidadId}>
+                      <SelectTrigger className="w-[220px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Unidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas las unidades</SelectItem>
+                        {unidadesDisponibles.map((unidad: any) => (
+                          <SelectItem key={unidad.id} value={unidad.id}>
+                            {unidad.nombre}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -319,6 +385,17 @@ export default function LicitacionesPage() {
                                 {licitacion.nombre}
                                 {licitacion.deletedAt && (
                                   <Badge variant="destructive" className="ml-2 text-xs">Eliminada</Badge>
+                                )}
+                                {(licitacion.departamento?.nombre || licitacion.unidad?.nombre) && (
+                                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                    {licitacion.departamento?.nombre
+                                      ? `Depto: ${licitacion.departamento.nombre}`
+                                      : "Depto: -"}
+                                    {" • "}
+                                    {licitacion.unidad?.nombre
+                                      ? `Unidad: ${licitacion.unidad.nombre}`
+                                      : "Unidad: -"}
+                                  </p>
                                 )}
                               </TableCell>
                               <TableCell className="text-slate-800 dark:text-slate-300">{licitacion.entidad}</TableCell>
@@ -407,6 +484,32 @@ export default function LicitacionesPage() {
                         <SelectItem value="En Preparación">En Preparación</SelectItem>
                         <SelectItem value="Adjudicada">Adjudicada</SelectItem>
                         <SelectItem value="Vencida">Vencida</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={departamentoId} onValueChange={handleDepartamentoFilterChange}>
+                      <SelectTrigger className="w-[220px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Sin departamento</SelectItem>
+                        {departamentos.map((dep: any) => (
+                          <SelectItem key={dep.id} value={dep.id}>
+                            {dep.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={unidadId} onValueChange={setUnidadId}>
+                      <SelectTrigger className="w-[220px] border-slate-300 dark:border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Unidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Sin unidad</SelectItem>
+                        {unidadesDisponibles.map((unidad: any) => (
+                          <SelectItem key={unidad.id} value={unidad.id}>
+                            {unidad.nombre}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <Button

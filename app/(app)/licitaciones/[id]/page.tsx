@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2, Headphones, Plus, Edit, X } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, FileText, MessageSquarePlus, Send, Upload, Download, Trash2, Headphones, Plus, Edit, X, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,10 @@ export default function LicitacionDetailPage() {
   const [eliminando, setEliminando] = useState(false);
   const [editandoUnidad, setEditandoUnidad] = useState(false);
   const [unidadTemp, setUnidadTemp] = useState("");
+  const [mostrarResumen, setMostrarResumen] = useState(true);
+  const [departamentoId, setDepartamentoId] = useState("");
+  const [unidadId, setUnidadId] = useState("");
+  const [guardandoGrupo, setGuardandoGrupo] = useState(false);
 
   // Estados para Soporte Técnico
   const [mostrandoFormSoporte, setMostrandoFormSoporte] = useState(false);
@@ -80,12 +85,41 @@ export default function LicitacionDetailPage() {
   // Fetch session to check permissions
   const { data: sessionData } = useSWR('/api/auth/session', fetcher);
   const isAdmin = sessionData?.user?.role === 'ADMIN';
+  const canManageGroup = ["ADMIN", "SUPERVISOR"].includes(sessionData?.user?.role ?? "");
 
   // Fetch documents separately for real-time updates
   const { data: docsData, mutate: mutateDocs } = useSWR(
     `/api/licitaciones/${id}/documentos`,
     fetcher
   );
+
+  const { data: departamentosData } = useSWR(
+    "/api/departamentos?incluirUnidades=true&soloActivos=true",
+    fetcher
+  );
+
+  const departamentos = departamentosData?.departamentos ?? [];
+  const unidadesDisponibles = useMemo(() => {
+    if (!departamentoId) {
+      return departamentos.flatMap((dep: any) => dep.unidades ?? []);
+    }
+
+    const departamentoSeleccionado = departamentos.find((dep: any) => dep.id === departamentoId);
+    return departamentoSeleccionado?.unidades ?? [];
+  }, [departamentos, departamentoId]);
+
+  useEffect(() => {
+    if (!licitacion) {
+      return;
+    }
+
+    setDepartamentoId(licitacion.departamentoId ?? "");
+    setUnidadId(licitacion.unidadId ?? "");
+  }, [licitacion?.departamentoId, licitacion?.unidadId]);
+
+  const grupoChanged =
+    (licitacion?.departamentoId ?? "") !== departamentoId ||
+    (licitacion?.unidadId ?? "") !== unidadId;
 
   const handleAgregarNota = async () => {
     if (!nuevaNota.trim()) {
@@ -210,6 +244,50 @@ export default function LicitacionDetailPage() {
     } catch (error) {
       console.error("Error:", error);
       toast.error("Error al actualizar unidad responsable");
+    }
+  };
+
+  const handleDepartamentoChange = (value: string) => {
+    const nuevoDepartamento = value === "none" ? "" : value;
+    setDepartamentoId(nuevoDepartamento);
+
+    if (!nuevoDepartamento) {
+      setUnidadId("");
+      return;
+    }
+
+    const departamentoSeleccionado = departamentos.find((dep: any) => dep.id === nuevoDepartamento);
+    const unidades = departamentoSeleccionado?.unidades ?? [];
+    if (unidadId && !unidades.some((unidad: any) => unidad.id === unidadId)) {
+      setUnidadId("");
+    }
+  };
+
+  const handleGuardarGrupo = async () => {
+    setGuardandoGrupo(true);
+    try {
+      const res = await fetch(`/api/licitaciones/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          departamentoId: departamentoId || null,
+          unidadId: unidadId || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Error al actualizar grupo");
+        return;
+      }
+
+      toast.success("Grupo actualizado");
+      mutate();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Error al actualizar grupo");
+    } finally {
+      setGuardandoGrupo(false);
     }
   };
 
@@ -508,6 +586,14 @@ export default function LicitacionDetailPage() {
           )}
           <Button
             variant="outline"
+            onClick={() => setMostrarResumen((prev) => !prev)}
+            className="border-slate-300 dark:border-white/20 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10"
+          >
+            {mostrarResumen ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+            {mostrarResumen ? "Ocultar resumen" : "Mostrar resumen"}
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => window.open(`/api/licitaciones/${id}/export-pdf`, "_blank")}
             className="border-green-500/30 text-green-600 dark:text-green-400 hover:bg-green-500/10"
           >
@@ -526,15 +612,15 @@ export default function LicitacionDetailPage() {
       <div className="flex-1 space-y-6 p-6">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
           {/* Información general */}
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur md:col-span-2">
+          <div className={`grid gap-6 ${mostrarResumen ? "md:grid-cols-3" : "md:grid-cols-1"}`}>
+            <Card className={`border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur ${mostrarResumen ? "md:col-span-2" : "md:col-span-3"}`}>
               <CardHeader>
                 <CardTitle className="text-white">Información General</CardTitle>
                 <CardDescription className="text-slate-300">
                   Datos principales de la licitación
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+                <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">Nombre</p>
                   <p className="text-base text-slate-900 dark:text-white">{licitacion.nombre}</p>
@@ -653,6 +739,61 @@ export default function LicitacionDetailPage() {
                     </div>
                   )}
                 </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-400">Grupo</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-500">Departamento</p>
+                      <Select
+                        value={departamentoId || "none"}
+                        onValueChange={handleDepartamentoChange}
+                        disabled={!canManageGroup}
+                      >
+                        <SelectTrigger className="bg-white/90 dark:bg-white/10 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white">
+                          <SelectValue placeholder="Selecciona departamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin departamento</SelectItem>
+                          {departamentos.map((dep: any) => (
+                            <SelectItem key={dep.id} value={dep.id}>
+                              {dep.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-500">Unidad</p>
+                      <Select
+                        value={unidadId || "none"}
+                        onValueChange={(value) => setUnidadId(value === "none" ? "" : value)}
+                        disabled={!canManageGroup}
+                      >
+                        <SelectTrigger className="bg-white/90 dark:bg-white/10 border-slate-300 dark:border-white/20 text-slate-900 dark:text-white">
+                          <SelectValue placeholder="Selecciona unidad" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Sin unidad</SelectItem>
+                          {unidadesDisponibles.map((unidad: any) => (
+                            <SelectItem key={unidad.id} value={unidad.id}>
+                              {unidad.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {canManageGroup && (
+                    <Button
+                      size="sm"
+                      onClick={handleGuardarGrupo}
+                      disabled={guardandoGrupo || !grupoChanged}
+                      className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700 w-fit"
+                    >
+                      {guardandoGrupo ? "Guardando..." : "Guardar grupo"}
+                    </Button>
+                  )}
+                </div>
                 {licitacion.urlExterna && (
                   <div>
                     <p className="text-sm font-medium text-slate-400">Enlace Externo</p>
@@ -667,14 +808,14 @@ export default function LicitacionDetailPage() {
                     </a>
                   </div>
                 )}
-              </CardContent>
+                </CardContent>
             </Card>
-
-            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-white">Fechas Importantes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {mostrarResumen && (
+              <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+                <CardHeader>
+                  <CardTitle className="text-white">Fechas Importantes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">Publicación</p>
                   <p className="text-base text-slate-900 dark:text-white">
@@ -707,6 +848,7 @@ export default function LicitacionDetailPage() {
                 )}
               </CardContent>
             </Card>
+            )}
           </div>
 
           {/* Información del Comprador y Ubicación */}

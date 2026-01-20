@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 
 // GET - Obtener un evento específico
 export async function GET(
@@ -14,6 +15,14 @@ export async function GET(
     }
 
     const { id, eventoId } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     const evento = await prisma.eventoLicitacion.findUnique({
       where: { id: eventoId },
@@ -78,6 +87,14 @@ export async function PATCH(
 
     const { id, eventoId } = await params;
     const body = await req.json();
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Verificar que el evento existe y pertenece a la licitación
     const eventoExistente = await prisma.eventoLicitacion.findUnique({
@@ -193,6 +210,14 @@ export async function DELETE(
     }
 
     const { id, eventoId } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Verificar que el evento existe y pertenece a la licitación
     const eventoExistente = await prisma.eventoLicitacion.findUnique({

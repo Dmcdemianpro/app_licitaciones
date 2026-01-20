@@ -42,6 +42,10 @@ model User {
   auditoriaLogs           AuditoriaLog[]
   eventosCreados          EventoLicitacion[] @relation("EventoCreatedBy")
 
+  // Membresías a grupos
+  departamentos           UsuarioDepartamento[]
+  unidades                UsuarioUnidad[]
+
   @@map("users")
 }
 
@@ -219,9 +223,15 @@ model Licitacion {
   direccionVisita   String? @map("direccion_visita") @db.NVarChar(500)
   direccionEntrega  String? @map("direccion_entrega") @db.NVarChar(500)
 
+  // Asociación a grupo (Departamento/Unidad)
+  departamentoId    String? @map("departamento_id") @db.NVarChar(100)
+  unidadId          String? @map("unidad_id") @db.NVarChar(100)
+
   responsable     User?                  @relation("LicitacionResponsable", fields: [responsableId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdBy       User                   @relation("LicitacionCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
   deletedBy       User?                  @relation("LicitacionDeletedBy", fields: [deletedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  departamento    Departamento?          @relation("LicitacionDepartamento", fields: [departamentoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unidad          Unidad?                @relation("LicitacionUnidad", fields: [unidadId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   documentos      Documento[]
   notas           Nota[]
   items           LicitacionItem[]
@@ -238,6 +248,8 @@ model Licitacion {
   @@index([regionUnidad], map: "idx_licitacion_region")
   @@index([comunaUnidad], map: "idx_licitacion_comuna")
   @@index([codigoOrganismo], map: "idx_licitacion_organismo")
+  @@index([departamentoId], map: "idx_licitacion_departamento")
+  @@index([unidadId], map: "idx_licitacion_unidad")
 }
 
 model Cita {
@@ -513,4 +525,90 @@ model EventoLicitacion {
   @@index([fechaEvento], map: "idx_evento_fecha")
   @@index([estado], map: "idx_evento_estado")
   @@index([importancia], map: "idx_evento_importancia")
+}
+
+// ==========================================
+// SISTEMA DE GRUPOS: DEPARTAMENTOS Y UNIDADES
+// ==========================================
+
+// Departamento - Grupo principal (ej: "HIS", "Infraestructura", "Desarrollo")
+model Departamento {
+  id          String    @id @default(cuid()) @db.NVarChar(100)
+  nombre      String    @unique @db.NVarChar(255)
+  descripcion String?   @db.NVarChar(500)
+  codigo      String?   @unique @db.NVarChar(50) // Código corto, ej: "HIS", "INF"
+  color       String?   @db.NVarChar(20) // Color para identificación visual
+  activo      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  unidades        Unidad[]
+  usuarios        UsuarioDepartamento[]
+  licitaciones    Licitacion[]          @relation("LicitacionDepartamento")
+
+  @@map("departamentos")
+  @@index([activo], map: "idx_departamento_activo")
+}
+
+// Unidad - Subgrupo dentro de un Departamento (ej: "Interoperabilidad", "Soporte")
+model Unidad {
+  id              String    @id @default(cuid()) @db.NVarChar(100)
+  nombre          String    @db.NVarChar(255)
+  descripcion     String?   @db.NVarChar(500)
+  codigo          String?   @db.NVarChar(50) // Código corto
+  departamentoId  String    @map("departamento_id") @db.NVarChar(100)
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relaciones
+  departamento    Departamento          @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
+  usuarios        UsuarioUnidad[]
+  licitaciones    Licitacion[]          @relation("LicitacionUnidad")
+
+  @@unique([departamentoId, nombre])
+  @@map("unidades")
+  @@index([departamentoId], map: "idx_unidad_departamento")
+  @@index([activo], map: "idx_unidad_activo")
+}
+
+// Membresía de Usuario a Departamento
+model UsuarioDepartamento {
+  id              String    @id @default(cuid()) @db.NVarChar(100)
+  userId          String    @map("user_id") @db.NVarChar(100)
+  departamentoId  String    @map("departamento_id") @db.NVarChar(100)
+  rol             String    @default("MIEMBRO") @db.NVarChar(50) // ADMIN, SUPERVISOR, MIEMBRO
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relaciones
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departamento    Departamento  @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departamentoId])
+  @@map("usuarios_departamentos")
+  @@index([userId], map: "idx_usuario_depto_user")
+  @@index([departamentoId], map: "idx_usuario_depto_depto")
+}
+
+// Membresía de Usuario a Unidad
+model UsuarioUnidad {
+  id        String    @id @default(cuid()) @db.NVarChar(100)
+  userId    String    @map("user_id") @db.NVarChar(100)
+  unidadId  String    @map("unidad_id") @db.NVarChar(100)
+  rol       String    @default("MIEMBRO") @db.NVarChar(50) // ADMIN, SUPERVISOR, MIEMBRO
+  activo    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relaciones
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unidad    Unidad    @relation(fields: [unidadId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unidadId])
+  @@map("usuarios_unidades")
+  @@index([userId], map: "idx_usuario_unidad_user")
+  @@index([unidadId], map: "idx_usuario_unidad_unidad")
 }

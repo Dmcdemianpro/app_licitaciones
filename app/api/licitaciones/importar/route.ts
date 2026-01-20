@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { getDefaultLicitacionGrupo } from "@/lib/licitacion-access";
 
 export async function POST(req: Request) {
   try {
@@ -23,7 +24,68 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { rawData } = body;
+    const { rawData, departamentoId: departamentoIdInput, unidadId: unidadIdInput } = body;
+
+    let departamentoId: string | null = null;
+    let unidadId: string | null = null;
+
+    if (rawData) {
+      const isAdmin = session.user.role === "ADMIN";
+      departamentoId = departamentoIdInput ? departamentoIdInput : null;
+      unidadId = unidadIdInput ? unidadIdInput : null;
+
+      if (!departamentoId && !unidadId) {
+        const grupoDefault = await getDefaultLicitacionGrupo(session.user.id);
+        departamentoId = grupoDefault.departamentoId;
+        unidadId = grupoDefault.unidadId;
+      }
+
+      if (!departamentoId && !unidadId && !isAdmin) {
+        return NextResponse.json(
+          { error: "Debes seleccionar un departamento o unidad" },
+          { status: 400 }
+        );
+      }
+
+      if (unidadId) {
+        const unidadRecord = await prisma.unidad.findUnique({
+          where: { id: unidadId },
+          select: { id: true, departamentoId: true, activo: true },
+        });
+
+        if (!unidadRecord || !unidadRecord.activo) {
+          return NextResponse.json(
+            { error: "Unidad no encontrada" },
+            { status: 400 }
+          );
+        }
+
+        if (departamentoId && unidadRecord.departamentoId !== departamentoId) {
+          return NextResponse.json(
+            { error: "La unidad no pertenece al departamento seleccionado" },
+            { status: 400 }
+          );
+        }
+
+        if (!departamentoId) {
+          departamentoId = unidadRecord.departamentoId;
+        }
+      }
+
+      if (departamentoId) {
+        const departamentoRecord = await prisma.departamento.findUnique({
+          where: { id: departamentoId },
+          select: { id: true, activo: true },
+        });
+
+        if (!departamentoRecord || !departamentoRecord.activo) {
+          return NextResponse.json(
+            { error: "Departamento no encontrado" },
+            { status: 400 }
+          );
+        }
+      }
+    }
 
     if (!rawData) {
       return NextResponse.json({ error: "Faltan datos de la licitación" }, { status: 400 });
@@ -166,6 +228,8 @@ export async function POST(req: Request) {
       fechaAdjudicacion: fechaAdjudicacion ? new Date(fechaAdjudicacion) : null,
       urlExterna,
       createdById: session.user.id,
+      departamentoId: departamentoId || null,
+      unidadId: unidadId || null,
 
       // Información básica adicional
       codigoEstado,

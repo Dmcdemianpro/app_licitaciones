@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 
 export async function GET(
   req: Request,
@@ -14,9 +15,33 @@ export async function GET(
 
     const { id } = await params;
 
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
+
     const licitacion = await prisma.licitacion.findUnique({
       where: { id },
       include: {
+        departamento: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            color: true,
+          },
+        },
+        unidad: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            departamentoId: true,
+          },
+        },
         responsable: {
           select: {
             id: true,
@@ -132,7 +157,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await req.json();
-    const { responsableId, estado, descripcion, unidadResponsable } = body;
+    const { responsableId, estado, descripcion, unidadResponsable, departamentoId, unidadId } = body;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Verificar que no esté eliminada
     const licitacionExistente = await prisma.licitacion.findUnique({ where: { id } });
@@ -143,6 +176,61 @@ export async function PATCH(
       );
     }
 
+    const hasDepartamento = Object.prototype.hasOwnProperty.call(body, "departamentoId");
+    const hasUnidad = Object.prototype.hasOwnProperty.call(body, "unidadId");
+
+    let departamentoIdValue = departamentoId ? departamentoId : null;
+    let unidadIdValue = unidadId ? unidadId : null;
+
+    if (hasDepartamento || hasUnidad) {
+      const canManageGroup = ["ADMIN", "SUPERVISOR"].includes(session.user.role ?? "");
+      if (!canManageGroup) {
+        return NextResponse.json(
+          { error: "No autorizado para cambiar el grupo" },
+          { status: 403 }
+        );
+      }
+
+      if (hasUnidad && unidadIdValue) {
+        const unidadRecord = await prisma.unidad.findUnique({
+          where: { id: unidadIdValue },
+          select: { id: true, departamentoId: true, activo: true },
+        });
+
+        if (!unidadRecord || !unidadRecord.activo) {
+          return NextResponse.json(
+            { error: "Unidad no encontrada" },
+            { status: 400 }
+          );
+        }
+
+        if (departamentoIdValue && unidadRecord.departamentoId !== departamentoIdValue) {
+          return NextResponse.json(
+            { error: "La unidad no pertenece al departamento seleccionado" },
+            { status: 400 }
+          );
+        }
+
+        if (!departamentoIdValue) {
+          departamentoIdValue = unidadRecord.departamentoId;
+        }
+      }
+
+      if (hasDepartamento && departamentoIdValue) {
+        const departamentoRecord = await prisma.departamento.findUnique({
+          where: { id: departamentoIdValue },
+          select: { id: true, activo: true },
+        });
+
+        if (!departamentoRecord || !departamentoRecord.activo) {
+          return NextResponse.json(
+            { error: "Departamento no encontrado" },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const licitacion = await prisma.licitacion.update({
       where: { id },
       data: {
@@ -150,9 +238,27 @@ export async function PATCH(
         ...(estado && { estado }),
         ...(descripcion !== undefined && { descripcion }),
         ...(unidadResponsable !== undefined && { unidadResponsable }),
+        ...(hasDepartamento && { departamentoId: departamentoIdValue }),
+        ...(hasUnidad && { unidadId: unidadIdValue }),
         updatedAt: new Date(),
       },
       include: {
+        departamento: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            color: true,
+          },
+        },
+        unidad: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            departamentoId: true,
+          },
+        },
         responsable: {
           select: {
             id: true,

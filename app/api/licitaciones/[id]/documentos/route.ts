@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -15,6 +16,11 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Licitacion no encontrada" }, { status: 404 });
+    }
 
     const documentos = await prisma.documento.findMany({
       where: { licitacionId: id },
@@ -50,6 +56,11 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Licitacion no encontrada" }, { status: 404 });
+    }
 
     // Verificar que la licitación existe
     const licitacion = await prisma.licitacion.findUnique({
@@ -160,6 +171,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Licitacion no encontrada" }, { status: 404 });
+    }
     const { searchParams } = new URL(req.url);
     const documentoId = searchParams.get("documentoId");
 

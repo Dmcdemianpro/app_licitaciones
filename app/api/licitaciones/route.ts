@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { buildLicitacionAccessWhere, getUserLicitacionScope } from "@/lib/licitacion-access";
 
 export async function GET(req: Request) {
   try {
@@ -13,6 +14,17 @@ export async function GET(req: Request) {
     const estado = searchParams.get("estado");
     const responsableId = searchParams.get("responsableId");
     const incluirEliminadas = searchParams.get("incluirEliminadas") === "true";
+    const isAdmin = session.user.role === "ADMIN";
+
+    let accessWhere: Record<string, unknown> | null = null;
+    if (!isAdmin) {
+      const scope = await getUserLicitacionScope(session.user.id);
+      accessWhere = buildLicitacionAccessWhere(scope);
+
+      if (!accessWhere) {
+        return NextResponse.json({ licitaciones: [] });
+      }
+    }
 
     // Construir filtros
     const where: any = {};
@@ -26,13 +38,33 @@ export async function GET(req: Request) {
     }
 
     // SOFT DELETE: Solo admins pueden ver eliminadas
-    if (!incluirEliminadas || session.user.role !== "ADMIN") {
+    if (!incluirEliminadas || !isAdmin) {
       where.deletedAt = null;
+    }
+
+    if (accessWhere) {
+      Object.assign(where, accessWhere);
     }
 
     const licitaciones = await prisma.licitacion.findMany({
       where,
       include: {
+        departamento: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            color: true,
+          },
+        },
+        unidad: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            departamentoId: true,
+          },
+        },
         responsable: {
           select: {
             id: true,

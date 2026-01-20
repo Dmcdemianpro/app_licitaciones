@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessLicitacion } from "@/lib/licitacion-access";
 
 export async function PATCH(
   req: Request,
@@ -14,6 +15,14 @@ export async function PATCH(
 
     const { id, soporteId } = await params;
     const body = await req.json();
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Verificar que el contacto existe y pertenece a la licitación
     const soporteExistente = await prisma.soporteTecnico.findUnique({
@@ -90,6 +99,14 @@ export async function DELETE(
     }
 
     const { id, soporteId } = await params;
+
+    const hasAccess = await canAccessLicitacion(session.user.id, session.user.role, id);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Licitacion no encontrada" },
+        { status: 404 }
+      );
+    }
 
     // Verificar que el contacto existe y pertenece a la licitación
     const soporteExistente = await prisma.soporteTecnico.findUnique({
