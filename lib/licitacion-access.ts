@@ -210,3 +210,40 @@ export async function getUserUnitRole(
 
   return membresia.rol;
 }
+
+/**
+ * Obtiene el grupo por defecto de un usuario para asignar a nuevas licitaciones
+ * Retorna el primer departamento/unidad activo del usuario
+ */
+export async function getDefaultLicitacionGrupo(
+  userId: string
+): Promise<{ departamentoId: string | null; unidadId: string | null }> {
+  // Obtener la primera membresía de departamento activa
+  const departamento = await prisma.usuarioDepartamento.findFirst({
+    where: { userId, activo: true },
+    select: { departamentoId: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // Obtener la primera membresía de unidad activa
+  const unidad = await prisma.usuarioUnidad.findFirst({
+    where: { userId, activo: true },
+    select: {
+      unidadId: true,
+      unidad: {
+        select: { departamentoId: true },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // Priorizar departamento directo, luego departamento de unidad
+  const departamentoId =
+    departamento?.departamentoId || unidad?.unidad?.departamentoId || null;
+  const unidadId = unidad?.unidadId || null;
+
+  return {
+    departamentoId,
+    unidadId,
+  };
+}
