@@ -12,6 +12,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const incluirUnidades = searchParams.get("incluirUnidades") === "true";
+    const incluirUsuarios = searchParams.get("incluirUsuarios") !== "false";
     const soloActivos = searchParams.get("soloActivos") !== "false";
     const soloMisDepartamentos = searchParams.get("soloMios") === "true";
 
@@ -37,7 +38,29 @@ export async function GET(req: Request) {
         unidades: incluirUnidades
           ? {
               where: soloActivos ? { activo: true } : undefined,
+              include: {
+                _count: {
+                  select: {
+                    usuarios: true,
+                    licitaciones: true,
+                  },
+                },
+              },
               orderBy: { nombre: "asc" },
+            }
+          : false,
+        usuarios: incluirUsuarios
+          ? {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "desc" },
             }
           : false,
         _count: {

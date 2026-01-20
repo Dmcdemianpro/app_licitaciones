@@ -90,7 +90,7 @@ export default function AdminGruposPage() {
 
   const isAdmin = sessionData?.user?.role === "ADMIN";
   const departamentos = deptosData?.departamentos ?? [];
-  const usuarios = usersData?.usuarios ?? [];
+  const usuarios = usersData?.users ?? [];
 
   // Handlers para Departamentos
   const handleAbrirDialogDepto = (depto?: any) => {

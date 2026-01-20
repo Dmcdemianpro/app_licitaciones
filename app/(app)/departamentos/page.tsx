@@ -45,7 +45,9 @@ export default function DepartamentosPage() {
   const [agregandoUnidad, setAgregandoUnidad] = useState(false);
 
   const { data: sessionData } = useSWR("/api/auth/session", fetcher);
-  const isAdmin = sessionData?.user?.role === "ADMIN";
+  const role = sessionData?.user?.role ?? "";
+  const isAdmin = role === "ADMIN";
+  const canManageMembers = ["ADMIN", "SUPERVISOR"].includes(role);
 
   const { data: departamentosData, mutate: mutateDepartamentos } = useSWR(
     "/api/departamentos?incluirUnidades=false&soloActivos=true",
@@ -81,7 +83,7 @@ export default function DepartamentosPage() {
   const { data: usuariosData } = useSWR("/api/usuarios", fetcher);
   const usuarios = usuariosData?.users ?? [];
   const usuariosActivos = useMemo(
-    () => usuarios.filter((user: any) => user.activo),
+    () => usuarios.filter((user: any) => user.activo !== false),
     [usuarios]
   );
 
@@ -520,7 +522,7 @@ export default function DepartamentosPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{miembro.rol}</Badge>
-                        {isAdmin && (
+                        {canManageMembers && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -533,7 +535,7 @@ export default function DepartamentosPage() {
                     </div>
                   ))}
 
-                  {isAdmin && (
+                  {canManageMembers && (
                     <div className="grid gap-3 md:grid-cols-2">
                       <Select
                         value={nuevoMiembroDepartamento.userId}
@@ -604,7 +606,7 @@ export default function DepartamentosPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{miembro.rol}</Badge>
-                        {isAdmin && (
+                        {canManageMembers && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -617,7 +619,7 @@ export default function DepartamentosPage() {
                     </div>
                   ))}
 
-                  {isAdmin && (
+                  {canManageMembers && (
                     <div className="grid gap-3 md:grid-cols-2">
                       <Select
                         value={nuevoMiembroUnidad.userId}

@@ -73,8 +73,9 @@ export async function POST(
 
     // Verificar permisos
     const esAdmin = session.user.role === "ADMIN";
+    const esSupervisor = session.user.role === "SUPERVISOR";
 
-    if (!esAdmin) {
+    if (!esAdmin && !esSupervisor) {
       // Verificar si es admin de la unidad o del departamento
       const esUnidadAdmin = await prisma.usuarioUnidad.findFirst({
         where: {
@@ -242,8 +243,9 @@ export async function DELETE(
 
     // Verificar permisos
     const esAdmin = session.user.role === "ADMIN";
+    const esSupervisor = session.user.role === "SUPERVISOR";
 
-    if (!esAdmin) {
+    if (!esAdmin && !esSupervisor) {
       const esUnidadAdmin = await prisma.usuarioUnidad.findFirst({
         where: {
           unidadId: id,
