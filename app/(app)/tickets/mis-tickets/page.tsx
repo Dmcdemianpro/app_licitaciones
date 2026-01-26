@@ -13,6 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+type TicketSla = {
+  responseStatus: "ok" | "warning" | "breached" | "met" | "none";
+  resolutionStatus: "ok" | "warning" | "breached" | "met" | "none";
+  overallStatus: "ok" | "warning" | "breached" | "met" | "none";
+  responseDueAt: string | null;
+  resolutionDueAt: string | null;
+  responseRemainingMinutes: number | null;
+  resolutionRemainingMinutes: number | null;
+};
+
 type Ticket = {
   id: string;
   folio: number;
@@ -35,6 +45,8 @@ type Ticket = {
   };
   createdAt: string;
   updatedAt: string;
+  firstResponseAt?: string | null;
+  sla?: TicketSla;
 };
 
 const fetcher = async (url: string) => {
@@ -56,6 +68,14 @@ const priorityLabels: Record<Ticket["priority"], string> = {
   ALTA: "Alta",
   MEDIA: "Media",
   BAJA: "Baja",
+};
+
+const slaLabels: Record<TicketSla["overallStatus"], string> = {
+  ok: "En tiempo",
+  warning: "Por vencer",
+  breached: "Vencido",
+  met: "Cumplido",
+  none: "Sin SLA",
 };
 
 type StatusFilter = "all" | "pending" | Ticket["status"];
@@ -117,6 +137,61 @@ export default function MisTicketsPage() {
 
   const formatDate = (value: string) =>
     new Intl.DateTimeFormat("es-ES", { dateStyle: "short" }).format(new Date(value));
+
+  const formatRemaining = (minutes: number | null): string => {
+    if (minutes == null) return "Sin tiempo";
+    if (minutes <= 0) return "Vencido";
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours < 24) {
+      return `${hours}h ${remainingMinutes}m`;
+    }
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days}d ${remainingHours}h`;
+  };
+
+  const getSlaIndicatorColor = (status: TicketSla["overallStatus"]) => {
+    switch (status) {
+      case "ok":
+        return "bg-emerald-500";
+      case "warning":
+        return "bg-amber-500";
+      case "breached":
+        return "bg-red-500";
+      case "met":
+        return "bg-green-500";
+      default:
+        return "bg-slate-400";
+    }
+  };
+
+  const getSlaIndicator = (ticket: Ticket) => {
+    if (!ticket.sla) {
+      return { status: "none" as const, label: slaLabels.none, detail: "Sin datos" };
+    }
+    const responsePhase = !ticket.firstResponseAt;
+    const phaseLabel = responsePhase ? "Respuesta" : "Resolucion";
+    const remaining = responsePhase
+      ? ticket.sla.responseRemainingMinutes
+      : ticket.sla.resolutionRemainingMinutes;
+    const rawStatus = responsePhase ? ticket.sla.responseStatus : ticket.sla.resolutionStatus;
+    const overall = ticket.status === "FINALIZADO" ? ticket.sla.resolutionStatus : rawStatus;
+    const detail =
+      remaining == null
+        ? ticket.status === "FINALIZADO"
+          ? "Cerrado"
+          : "Sin tiempo"
+        : formatRemaining(remaining);
+    return {
+      status: overall,
+      label: slaLabels[overall],
+      detail: `${phaseLabel}: ${detail}`,
+    };
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -272,6 +347,7 @@ export default function MisTicketsPage() {
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Tipo</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Prioridad</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Estado</TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white">SLA</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Creado por</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Fecha</TableHead>
                       </TableRow>
@@ -297,6 +373,26 @@ export default function MisTicketsPage() {
                             <Badge variant={getStatusColor(ticket.status)}>
                               {statusLabels[ticket.status]}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const slaInfo = getSlaIndicator(ticket);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`h-3 w-3 rounded-full ${getSlaIndicatorColor(slaInfo.status)}`}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                                      {slaInfo.label}
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                      {slaInfo.detail}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                             {ticket.owner.name || ticket.owner.email}

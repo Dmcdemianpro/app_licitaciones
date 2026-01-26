@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { ticketUpdateSchema } from "@/lib/validations/tickets";
+import { buildSlaDates, getSlaStatus } from "@/lib/sla";
+import { startTicketScheduler } from "@/lib/ticket-scheduler";
+
+startTicketScheduler();
 
 export async function GET(
   req: Request,
@@ -52,6 +57,7 @@ export async function GET(
     // Agregar folioFormateado
     const ticketConFolio = {
       ...ticket,
+      sla: getSlaStatus(ticket),
       folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
     };
 
@@ -156,7 +162,12 @@ export async function PATCH(
     }
 
     const currentStatus = ticketAnterior.status;
-    const nextStatus = parsed.data.status as string | undefined;
+    const hasStatus = Object.prototype.hasOwnProperty.call(parsed.data, "status");
+    const nextStatus = hasStatus ? (parsed.data.status as string | undefined) : undefined;
+    const hasAssigneeId = Object.prototype.hasOwnProperty.call(parsed.data, "assigneeId");
+    const nextAssigneeId = hasAssigneeId
+      ? (parsed.data.assigneeId as string | null | undefined)
+      : ticketAnterior.assigneeId;
 
     if (isUser) {
       const isAssignee = ticketAnterior.assigneeId === session.user.id;
@@ -220,10 +231,101 @@ export async function PATCH(
       }
     }
 
+    const systemUpdates: Prisma.TicketUpdateInput = {};
+    const now = new Date();
+
+    if (hasAssigneeId) {
+      if (nextAssigneeId && nextAssigneeId !== ticketAnterior.assigneeId) {
+        systemUpdates.assignedAt = now;
+      }
+      if (!nextAssigneeId && ticketAnterior.assigneeId) {
+        systemUpdates.assignedAt = null;
+      }
+    }
+
+    if (nextStatus && nextStatus !== currentStatus) {
+      if (nextStatus === "ASIGNADO") {
+        systemUpdates.assignedAt = now;
+      }
+      if (nextStatus === "EN_PROGRESO") {
+        systemUpdates.startedAt = now;
+        if (ticketAnterior.firstResponseAt == null) {
+          systemUpdates.firstResponseAt = now;
+        }
+      }
+      if (nextStatus === "PENDIENTE_VALIDACION") {
+        systemUpdates.pendingValidationAt = now;
+        if (ticketAnterior.firstResponseAt == null) {
+          systemUpdates.firstResponseAt = now;
+        }
+      }
+      if (nextStatus === "FINALIZADO") {
+        systemUpdates.closedAt = now;
+        if (ticketAnterior.firstResponseAt == null) {
+          systemUpdates.firstResponseAt = now;
+        }
+      }
+      if (nextStatus === "REABIERTO") {
+        systemUpdates.reopenedAt = now;
+        systemUpdates.closedAt = null;
+      }
+    }
+
+    const hasPriority = Object.prototype.hasOwnProperty.call(parsed.data, "priority");
+    const nextPriority = (hasPriority ? parsed.data.priority : ticketAnterior.priority) as string;
+    const missingSla =
+      ticketAnterior.slaResponseMinutes == null ||
+      ticketAnterior.slaResolutionMinutes == null ||
+      ticketAnterior.slaResponseDueAt == null ||
+      ticketAnterior.slaResolutionDueAt == null;
+    const priorityChanged = hasPriority && parsed.data.priority !== ticketAnterior.priority;
+
+    if (missingSla || priorityChanged) {
+      const slaDates = buildSlaDates(nextPriority, ticketAnterior.createdAt);
+      systemUpdates.slaResponseMinutes = slaDates.responseMinutes;
+      systemUpdates.slaResolutionMinutes = slaDates.resolutionMinutes;
+      systemUpdates.slaResponseDueAt = slaDates.responseDueAt;
+      systemUpdates.slaResolutionDueAt = slaDates.resolutionDueAt;
+    }
+
+    const responseDueAt =
+      (systemUpdates.slaResponseDueAt as Date | undefined) ?? ticketAnterior.slaResponseDueAt;
+    const resolutionDueAt =
+      (systemUpdates.slaResolutionDueAt as Date | undefined) ?? ticketAnterior.slaResolutionDueAt;
+    const firstResponseAt =
+      (systemUpdates.firstResponseAt as Date | undefined) ?? ticketAnterior.firstResponseAt;
+    const closedAt =
+      (systemUpdates.closedAt as Date | null | undefined) ?? ticketAnterior.closedAt;
+
+    if (
+      systemUpdates.firstResponseAt &&
+      responseDueAt &&
+      firstResponseAt &&
+      firstResponseAt > responseDueAt &&
+      ticketAnterior.slaResponseBreachedAt == null
+    ) {
+      systemUpdates.slaResponseBreachedAt = firstResponseAt;
+    }
+
+    if (
+      systemUpdates.closedAt &&
+      resolutionDueAt &&
+      closedAt &&
+      closedAt > resolutionDueAt &&
+      ticketAnterior.slaResolutionBreachedAt == null
+    ) {
+      systemUpdates.slaResolutionBreachedAt = closedAt;
+    }
+
+    const updatePayload: Prisma.TicketUpdateInput = {
+      ...parsed.data,
+      ...systemUpdates,
+    };
+
     // Actualizar el ticket
     const ticket = await prisma.ticket.update({
       where: { id },
-      data: parsed.data,
+      data: updatePayload,
       include: {
         owner: {
           select: {
@@ -244,11 +346,11 @@ export async function PATCH(
 
     // Registrar cambios en auditoria
     const cambios: Record<string, { anterior: any; nuevo: any }> = {};
-    Object.keys(parsed.data).forEach((key) => {
-      if (ticketAnterior[key as keyof typeof ticketAnterior] !== parsed.data[key as keyof typeof parsed.data]) {
+    Object.keys(updatePayload).forEach((key) => {
+      if (ticketAnterior[key as keyof typeof ticketAnterior] !== updatePayload[key as keyof typeof updatePayload]) {
         cambios[key] = {
           anterior: ticketAnterior[key as keyof typeof ticketAnterior],
-          nuevo: parsed.data[key as keyof typeof parsed.data],
+          nuevo: updatePayload[key as keyof typeof updatePayload],
         };
       }
     });
@@ -315,6 +417,7 @@ export async function PATCH(
     // Agregar folioFormateado
     const ticketConFolio = {
       ...ticket,
+      sla: getSlaStatus(ticket),
       folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
     };
 

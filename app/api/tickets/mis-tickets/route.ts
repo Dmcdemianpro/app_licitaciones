@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getSlaStatus } from "@/lib/sla";
 
 export async function GET() {
   try {
@@ -24,6 +25,7 @@ export async function GET() {
     // Agregar folioFormateado a cada ticket
     const ticketsConFolio = tickets.map((ticket) => ({
       ...ticket,
+      sla: getSlaStatus(ticket),
       folioFormateado: `HEC-T${String(ticket.folio).padStart(2, "0")}`,
     }));
 

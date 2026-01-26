@@ -41,6 +41,8 @@ model User {
   notas                   Nota[]
   auditoriaLogs           AuditoriaLog[]
   eventosCreados          EventoLicitacion[] @relation("EventoCreatedBy")
+  macrosCreadas           Macro[]            @relation("MacroCreatedBy")
+  ticketAssignmentTargets TicketAssignmentRule[] @relation("TicketAssignmentTargetUser")
 
   // Membresías a grupos
   departamentos           UsuarioDepartamento[]
@@ -101,6 +103,18 @@ model Ticket {
   ownerId           String    @map("owner_id") @db.NVarChar(100)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  assignedAt        DateTime? @map("assigned_at")
+  startedAt         DateTime? @map("started_at")
+  pendingValidationAt DateTime? @map("pending_validation_at")
+  closedAt          DateTime? @map("closed_at")
+  reopenedAt        DateTime? @map("reopened_at")
+  firstResponseAt   DateTime? @map("first_response_at")
+  slaResponseMinutes   Int?    @map("sla_response_minutes")
+  slaResolutionMinutes Int?    @map("sla_resolution_minutes")
+  slaResponseDueAt      DateTime? @map("sla_response_due_at")
+  slaResolutionDueAt    DateTime? @map("sla_resolution_due_at")
+  slaResponseBreachedAt DateTime? @map("sla_response_breached_at")
+  slaResolutionBreachedAt DateTime? @map("sla_resolution_breached_at")
   deletedAt         DateTime? @map("deleted_at")
   deletedById       String?   @map("deleted_by_id") @db.NVarChar(100)
   motivoEliminacion String?   @map("motivo_eliminacion") @db.NVarChar(MAX)
@@ -112,6 +126,7 @@ model Ticket {
   notas          Nota[]
   soporteTecnico SoporteTecnico[]
   eventos        EventoLicitacion[]
+  alerts         TicketAlert[]
 
   @@map("tickets")
   @@index([ownerId], map: "idx_ticket_owner")
@@ -120,6 +135,59 @@ model Ticket {
   @@index([priority], map: "idx_ticket_priority")
   @@index([folio], map: "idx_ticket_folio")
   @@index([deletedAt], map: "idx_ticket_deleted_at")
+}
+
+model Macro {
+  id          String   @id @default(cuid()) @db.NVarChar(100)
+  titulo      String   @db.NVarChar(255)
+  contenido   String   @db.NVarChar(MAX)
+  entidad     String   @default("TICKET") @db.NVarChar(50)
+  activo      Boolean  @default(true)
+  createdById String   @map("created_by_id") @db.NVarChar(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User @relation("MacroCreatedBy", fields: [createdById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("macros")
+  @@index([entidad], map: "idx_macro_entidad")
+  @@index([activo], map: "idx_macro_activo")
+}
+
+model TicketAssignmentRule {
+  id           String   @id @default(cuid()) @db.NVarChar(100)
+  nombre       String   @db.NVarChar(255)
+  activo       Boolean  @default(true)
+  orden        Int      @default(1)
+  ticketType   String?  @map("ticket_type") @db.NVarChar(100)
+  priority     String?  @db.NVarChar(50)
+  targetRole   String?  @map("target_role") @db.NVarChar(50)
+  targetUserId String?  @map("target_user_id") @db.NVarChar(100)
+  maxActive    Int?     @map("max_active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  targetUser User? @relation("TicketAssignmentTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@map("ticket_assignment_rules")
+  @@index([activo, orden], map: "idx_ticket_assignment_activo")
+  @@index([ticketType], map: "idx_ticket_assignment_type")
+  @@index([priority], map: "idx_ticket_assignment_priority")
+}
+
+model TicketAlert {
+  id        String   @id @default(cuid()) @db.NVarChar(100)
+  ticketId  String   @map("ticket_id") @db.NVarChar(100)
+  tipo      String   @db.NVarChar(100)
+  sentAt    DateTime @map("sent_at")
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_alerts")
+  @@unique([ticketId, tipo], map: "uq_ticket_alert_tipo")
+  @@index([tipo], map: "idx_ticket_alert_tipo")
+  @@index([sentAt], map: "idx_ticket_alert_sent_at")
 }
 
 model Licitacion {

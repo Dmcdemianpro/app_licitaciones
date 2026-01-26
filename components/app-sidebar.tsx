@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, FileText, Gavel, Home, Settings, Ticket, Users, Bell, BarChart3, LogOut, Building2 } from "lucide-react"
+import { Calendar, FileText, Gavel, Home, Settings, Ticket, Users, Bell, BarChart3, LogOut, Building2, Sliders } from "lucide-react"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 
@@ -56,6 +56,11 @@ const adminItems = [
     title: "Usuarios",
     url: "/usuarios",
     icon: Users,
+  },
+  {
+    title: "Automatizacion",
+    url: "/automatizacion",
+    icon: Sliders,
   },
   {
     title: "Grupos",

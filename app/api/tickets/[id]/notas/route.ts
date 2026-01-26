@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
@@ -16,7 +17,12 @@ export async function GET(
 
     const ticket = await prisma.ticket.findFirst({
       where: { id, deletedAt: null },
-      select: { assigneeId: true },
+      select: {
+        assigneeId: true,
+        firstResponseAt: true,
+        slaResponseDueAt: true,
+        slaResponseBreachedAt: true,
+      },
     });
 
     if (!ticket) {
@@ -115,6 +121,24 @@ export async function POST(
         },
       },
     });
+
+    if (ticket.firstResponseAt == null) {
+      const now = new Date();
+      const updateData: Prisma.TicketUpdateInput = {
+        firstResponseAt: now,
+      };
+      if (
+        ticket.slaResponseDueAt &&
+        now > ticket.slaResponseDueAt &&
+        ticket.slaResponseBreachedAt == null
+      ) {
+        updateData.slaResponseBreachedAt = now;
+      }
+      await prisma.ticket.update({
+        where: { id },
+        data: updateData,
+      });
+    }
 
     return NextResponse.json({ nota });
   } catch (error) {

@@ -54,6 +54,30 @@ const priorityLabels: Record<string, string> = {
   BAJA: "Baja",
 };
 
+type TicketSla = {
+  responseStatus: "ok" | "warning" | "breached" | "met" | "none";
+  resolutionStatus: "ok" | "warning" | "breached" | "met" | "none";
+  overallStatus: "ok" | "warning" | "breached" | "met" | "none";
+  responseDueAt: string | null;
+  resolutionDueAt: string | null;
+  responseRemainingMinutes: number | null;
+  resolutionRemainingMinutes: number | null;
+};
+
+const slaLabels: Record<TicketSla["overallStatus"], string> = {
+  ok: "En tiempo",
+  warning: "Por vencer",
+  breached: "Vencido",
+  met: "Cumplido",
+  none: "Sin SLA",
+};
+
+const auditActionLabels: Record<string, string> = {
+  CREATE: "Ticket creado",
+  UPDATE: "Actualizacion",
+  DELETE: "Ticket eliminado",
+};
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "CREADO":
@@ -98,12 +122,31 @@ type Ticket = {
   assignee: string | null;
   createdAt: string;
   updatedAt: string;
+  assignedAt?: string | null;
+  startedAt?: string | null;
+  pendingValidationAt?: string | null;
+  closedAt?: string | null;
+  reopenedAt?: string | null;
+  firstResponseAt?: string | null;
+  sla?: TicketSla;
   owner: {
     id: string;
     name: string | null;
     email: string;
   };
   assignedTo: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+};
+
+type AuditEntry = {
+  id: string;
+  accion: string;
+  cambios: string | null;
+  createdAt: string;
+  user: {
     id: string;
     name: string | null;
     email: string;
@@ -138,6 +181,15 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     `/api/tickets/${id}/notas`,
     fetcher
   );
+  const { data: macrosData } = useSWR(
+    "/api/automatizacion/macros?entidad=TICKET&soloActivos=true",
+    fetcher
+  );
+  const macros = macrosData?.macros ?? [];
+  const [macroSeleccionada, setMacroSeleccionada] = useState("");
+
+  // History
+  const { data: historialData } = useSWR(`/api/tickets/${id}/historial`, fetcher);
 
   // Documents
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -281,6 +333,88 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     }).format(date);
   };
 
+  const formatOptionalDate = (value?: string | null) => {
+    if (!value) return "Sin registro";
+    return formatDate(value);
+  };
+
+  const formatRemaining = (minutes: number | null) => {
+    if (minutes == null) return "Sin tiempo";
+    if (minutes <= 0) return "Vencido";
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours < 24) return `${hours}h ${remainingMinutes}m`;
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days}d ${remainingHours}h`;
+  };
+
+  const getSlaBadgeClass = (status: TicketSla["overallStatus"]) => {
+    switch (status) {
+      case "ok":
+        return "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300";
+      case "warning":
+        return "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300";
+      case "breached":
+        return "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-300";
+      case "met":
+        return "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-300";
+      default:
+        return "border-slate-500/30 bg-slate-500/10 text-slate-600 dark:text-slate-300";
+    }
+  };
+
+  const changeLabels: Record<string, string> = {
+    status: "Estado",
+    priority: "Prioridad",
+    assignee: "Responsable",
+    assigneeId: "Responsable",
+    title: "Titulo",
+    type: "Tipo",
+  };
+
+  const formatChangeValue = (key: string, value: any) => {
+    if (value == null || value === "") return "Sin asignar";
+    if (key === "status") return statusLabels[value] || value;
+    if (key === "priority") return priorityLabels[value] || value;
+    if (key === "assigneeId") {
+      const user = usersData?.users?.find((item: any) => item.id === value);
+      return user ? user.name || user.email : value;
+    }
+    return String(value);
+  };
+
+  const summarizeChanges = (entry: AuditEntry) => {
+    if (!entry.cambios) return [];
+    let parsed: any;
+    try {
+      parsed = JSON.parse(entry.cambios);
+    } catch {
+      return [];
+    }
+    if (parsed.nuevo) return [];
+    const items: string[] = [];
+    Object.keys(changeLabels).forEach((key) => {
+      const change = parsed[key];
+      if (!change || !Object.prototype.hasOwnProperty.call(change, "nuevo")) return;
+      const before = formatChangeValue(key, change.anterior);
+      const after = formatChangeValue(key, change.nuevo);
+      if (before !== after) {
+        items.push(`${changeLabels[key]}: ${before} -> ${after}`);
+      }
+    });
+    return items;
+  };
+
+  const handleInsertMacro = () => {
+    const macro = macros.find((item: any) => item.id === macroSeleccionada);
+    if (!macro) return;
+    setNotaContenido((prev) =>
+      prev ? `${prev}\n${macro.contenido}` : macro.contenido
+    );
+  };
+
   const handleDelete = async () => {
     if (!deleteMotivo.trim()) {
       alert("Debes ingresar un motivo para eliminar el ticket");
@@ -388,6 +522,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       </div>
     );
   }
+
+  const historial = (historialData?.historial ?? []) as AuditEntry[];
+  const responseStatus = (ticket.sla?.responseStatus ?? "none") as TicketSla["overallStatus"];
+  const resolutionStatus = (ticket.sla?.resolutionStatus ?? "none") as TicketSla["overallStatus"];
+  const responseDueAt = ticket.sla?.responseDueAt ?? null;
+  const resolutionDueAt = ticket.sla?.resolutionDueAt ?? null;
+  const responseRemaining = ticket.sla?.responseRemainingMinutes ?? null;
+  const resolutionRemaining = ticket.sla?.resolutionRemainingMinutes ?? null;
+  const timeFields = [
+    { label: "Asignado", value: ticket.assignedAt },
+    { label: "Inicio", value: ticket.startedAt },
+    { label: "En validacion", value: ticket.pendingValidationAt },
+    { label: "Finalizado", value: ticket.closedAt },
+    { label: "Reabierto", value: ticket.reopenedAt },
+    { label: "Primera respuesta", value: ticket.firstResponseAt },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -526,6 +676,61 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-lg">SLA y tiempos</CardTitle>
+              <CardDescription className="text-slate-300">
+                Seguimiento de respuesta, resolucion y tiempos clave del ticket
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">SLA respuesta</p>
+                    <Badge variant="outline" className={getSlaBadgeClass(responseStatus)}>
+                      {slaLabels[responseStatus]}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-500">Vence: {formatOptionalDate(responseDueAt)}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">
+                    {responseRemaining == null && ticket.firstResponseAt
+                      ? "Respondido"
+                      : formatRemaining(responseRemaining)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">SLA resolucion</p>
+                    <Badge variant="outline" className={getSlaBadgeClass(resolutionStatus)}>
+                      {slaLabels[resolutionStatus]}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-500">Vence: {formatOptionalDate(resolutionDueAt)}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200">
+                    {resolutionRemaining == null && ticket.status === "FINALIZADO"
+                      ? "Cerrado"
+                      : formatRemaining(resolutionRemaining)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                {timeFields.map((field) => (
+                  <div
+                    key={field.label}
+                    className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-3"
+                  >
+                    <p className="text-xs text-slate-500">{field.label}</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {formatOptionalDate(field.value)}
+                    </p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -679,6 +884,58 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             </Card>
           </div>
 
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-lg">Linea de tiempo</CardTitle>
+              <CardDescription className="text-slate-300">
+                Registro de cambios y actividades sobre el ticket
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {!historialData && (
+                <p className="text-sm text-slate-400">Cargando historial...</p>
+              )}
+              {historialData && historial.length === 0 && (
+                <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 px-6 py-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  No hay movimientos registrados aun.
+                </div>
+              )}
+              {historial.map((entry) => {
+                const summary = summarizeChanges(entry);
+                return (
+                  <div
+                    key={entry.id}
+                    className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {auditActionLabels[entry.accion] || entry.accion}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          por {entry.user?.name || entry.user?.email || "Sistema"}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-500">{formatDate(entry.createdAt)}</p>
+                    </div>
+                    {summary.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {summary.map((line, index) => (
+                          <p
+                            key={`${entry.id}-${index}`}
+                            className="text-xs text-slate-600 dark:text-slate-300"
+                          >
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
           {/* Bitacora */}
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>
@@ -692,6 +949,32 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                {macros.length > 0 && (
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                    <Select value={macroSeleccionada} onValueChange={setMacroSeleccionada}>
+                      <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white md:w-[320px]">
+                        <SelectValue placeholder="Usar macro" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {macros.map((macro: any) => (
+                          <SelectItem key={macro.id} value={macro.id}>
+                            {macro.titulo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleInsertMacro}
+                      disabled={!macroSeleccionada}
+                      className="border-white/20 text-slate-900 dark:text-white hover:bg-white/10"
+                    >
+                      Insertar macro
+                    </Button>
+                  </div>
+                )}
                 <Textarea
                   className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
                   placeholder="Escribe un avance..."
