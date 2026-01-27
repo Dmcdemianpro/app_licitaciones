@@ -61,7 +61,7 @@ function calculateStatus(
   dueAt: Date | null,
   totalMinutes: number,
   completedAt: Date | null
-) {
+): { status: SlaStatus; remainingMinutes: number | null } {
   if (!dueAt) {
     return { status: "none" as SlaStatus, remainingMinutes: null };
   }
