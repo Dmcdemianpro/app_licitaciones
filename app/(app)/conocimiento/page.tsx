@@ -384,16 +384,19 @@ export default function ConocimientoPage() {
                 <div className="space-y-2">
                   <Label>Categoria</Label>
                   <Select
-                    value={nuevoArticulo.categoriaId}
+                    value={nuevoArticulo.categoriaId || "none"}
                     onValueChange={(value) =>
-                      setNuevoArticulo((prev) => ({ ...prev, categoriaId: value }))
+                      setNuevoArticulo((prev) => ({
+                        ...prev,
+                        categoriaId: value === "none" ? "" : value,
+                      }))
                     }
                   >
                     <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
                       <SelectValue placeholder="Categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">General</SelectItem>
+                      <SelectItem value="none">General</SelectItem>
                       {categorias.map((categoria) => (
                         <SelectItem key={categoria.id} value={categoria.id}>
                           {categoria.nombre}
