@@ -242,7 +242,6 @@ export async function runSlaAlerts() {
   if (alertsToCreate.length) {
     await prisma.ticketAlert.createMany({
       data: alertsToCreate,
-      skipDuplicates: true,
     });
   }
   if (notificationsToCreate.length) {
