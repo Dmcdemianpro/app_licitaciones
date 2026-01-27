@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 
 import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations/tickets";
 
@@ -41,6 +42,12 @@ const prioridades = [
   { value: "MEDIA", label: "Media" },
   { value: "BAJA", label: "Baja" },
 ];
+const canales = [
+  { value: "PORTAL", label: "Portal" },
+  { value: "EMAIL", label: "Email" },
+  { value: "CHAT", label: "Chat" },
+  { value: "WHATSAPP", label: "WhatsApp" },
+];
 const responsables = [
   "Ivan Leiva",
   "Dario Perez",
@@ -49,23 +56,43 @@ const responsables = [
   "Luis Rodriguez",
 ];
 
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("No se pudo cargar");
+  return res.json();
+};
+
 export default function NuevoTicketPage() {
   const {
     control,
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(ticketCreateSchema),
   });
   const { toast } = useToast();
   const router = useRouter();
+  const { data: departamentosData } = useSWR(
+    "/api/departamentos?incluirUnidades=true&incluirUsuarios=false&soloActivos=true",
+    fetcher
+  );
+  const departamentos = departamentosData?.departamentos ?? [];
+  const departamentoSeleccionadoId = watch("departamentoId");
+  const departamentoSeleccionado = departamentos.find(
+    (dep: any) => dep.id === departamentoSeleccionadoId
+  );
+  const unidades = departamentoSeleccionado?.unidades ?? [];
 
   const onSubmit = async (data: FormData) => {
     const payload = {
       ...data,
       status: data.status ?? "CREADO",
       assignee: data.assignee?.trim() || null,
+      departamentoId: data.departamentoId || null,
+      unidadId: data.unidadId || null,
     };
 
     const res = await fetch("/api/tickets", {
@@ -205,6 +232,86 @@ export default function NuevoTicketPage() {
                         {errors.priority.message}
                       </p>
                     )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Canal</Label>
+                  <Controller
+                    name="canal"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el canal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {canales.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Departamento</Label>
+                    <Controller
+                      name="departamentoId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(value) => {
+                            const next = value === "none" ? "" : value;
+                            field.onChange(next);
+                            setValue("unidadId", "");
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un departamento" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sin departamento</SelectItem>
+                            {departamentos.map((dep: any) => (
+                              <SelectItem key={dep.id} value={dep.id}>
+                                {dep.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Unidad</Label>
+                    <Controller
+                      name="unidadId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value ?? "none"}
+                          onValueChange={(value) => field.onChange(value === "none" ? "" : value)}
+                          disabled={!departamentoSeleccionado}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona una unidad" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sin unidad</SelectItem>
+                            {unidades.map((unidad: any) => (
+                              <SelectItem key={unidad.id} value={unidad.id}>
+                                {unidad.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
 

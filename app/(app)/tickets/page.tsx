@@ -35,6 +35,7 @@ type Ticket = {
   priority: "ALTA" | "MEDIA" | "BAJA";
   status: "CREADO" | "ASIGNADO" | "EN_PROGRESO" | "PENDIENTE_VALIDACION" | "FINALIZADO" | "REABIERTO";
   assignee?: string | null;
+  canal?: "PORTAL" | "EMAIL" | "CHAT" | "WHATSAPP";
   createdAt: string;
   updatedAt: string;
   firstResponseAt?: string | null;
@@ -71,10 +72,18 @@ const slaLabels: Record<TicketSla["overallStatus"], string> = {
   none: "Sin SLA",
 };
 
+const channelLabels: Record<NonNullable<Ticket["canal"]>, string> = {
+  PORTAL: "Portal",
+  EMAIL: "Email",
+  CHAT: "Chat",
+  WHATSAPP: "WhatsApp",
+};
+
 export default function TicketsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Ticket["status"]>("all");
   const [priorityFilter, setPriorityFilter] = useState<"all" | Ticket["priority"]>("all");
+  const [channelFilter, setChannelFilter] = useState<"all" | NonNullable<Ticket["canal"]>>("all");
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const canEdit = ["ADMIN", "SUPERVISOR"].includes(role ?? "");
@@ -92,9 +101,11 @@ export default function TicketsPage() {
         ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || ticket.status === statusFilter;
       const matchesPriority = priorityFilter === "all" || ticket.priority === priorityFilter;
-      return matchesSearch && matchesStatus && matchesPriority;
+      const matchesChannel =
+        channelFilter === "all" || ticket.canal === channelFilter || !ticket.canal;
+      return matchesSearch && matchesStatus && matchesPriority && matchesChannel;
     });
-  }, [data, priorityFilter, searchTerm, statusFilter]);
+  }, [channelFilter, data, priorityFilter, searchTerm, statusFilter]);
 
   const getPriorityColor = (priority: Ticket["priority"]) => {
     switch (priority) {
@@ -259,7 +270,7 @@ export default function TicketsPage() {
                 Busca por título o ID y filtra por estado o prioridad
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
+            <CardContent className="grid gap-4 md:grid-cols-4">
               <div className="md:col-span-1">
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-700 dark:text-slate-300" />
@@ -297,6 +308,20 @@ export default function TicketsPage() {
                     <SelectItem value="ALTA">Alta</SelectItem>
                     <SelectItem value="MEDIA">Media</SelectItem>
                     <SelectItem value="BAJA">Baja</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Select value={channelFilter} onValueChange={(v) => setChannelFilter(v as any)}>
+                  <SelectTrigger className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                    <SelectValue placeholder="Canal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los canales</SelectItem>
+                    <SelectItem value="PORTAL">Portal</SelectItem>
+                    <SelectItem value="EMAIL">Email</SelectItem>
+                    <SelectItem value="CHAT">Chat</SelectItem>
+                    <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -342,6 +367,7 @@ export default function TicketsPage() {
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Prioridad</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Estado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">SLA</TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white">Canal</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Asignado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Creado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Actualizado</TableHead>
@@ -383,6 +409,9 @@ export default function TicketsPage() {
                                 </div>
                               );
                             })()}
+                          </TableCell>
+                          <TableCell className="text-slate-600 dark:text-slate-200">
+                            {ticket.canal ? channelLabels[ticket.canal] : "Portal"}
                           </TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{ticket.assignee || "Sin asignar"}</TableCell>
                           <TableCell className="text-slate-600 dark:text-slate-200">{formatDate(ticket.createdAt)}</TableCell>

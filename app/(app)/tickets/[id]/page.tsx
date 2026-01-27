@@ -10,6 +10,8 @@ import {
   Upload,
   Download,
   Send,
+  MessageCircle,
+  Star,
   User,
   Loader2,
   AlertCircle,
@@ -27,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +73,13 @@ const slaLabels: Record<TicketSla["overallStatus"], string> = {
   breached: "Vencido",
   met: "Cumplido",
   none: "Sin SLA",
+};
+
+const channelLabels: Record<string, string> = {
+  PORTAL: "Portal",
+  EMAIL: "Email",
+  CHAT: "Chat",
+  WHATSAPP: "WhatsApp",
 };
 
 const auditActionLabels: Record<string, string> = {
@@ -120,6 +130,32 @@ type Ticket = {
   priority: string;
   status: string;
   assignee: string | null;
+  canal?: "PORTAL" | "EMAIL" | "CHAT" | "WHATSAPP";
+  externalRef?: string | null;
+  departamento?: {
+    id: string;
+    nombre: string;
+    codigo: string | null;
+    color: string | null;
+  } | null;
+  unidad?: {
+    id: string;
+    nombre: string;
+    codigo: string | null;
+    departamentoId: string | null;
+  } | null;
+  parentTicket?: {
+    id: string;
+    folio: number;
+    title: string;
+    status: string;
+  } | null;
+  childTickets?: Array<{
+    id: string;
+    folio: number;
+    title: string;
+    status: string;
+  }>;
   createdAt: string;
   updatedAt: string;
   assignedAt?: string | null;
@@ -187,6 +223,20 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   );
   const macros = macrosData?.macros ?? [];
   const [macroSeleccionada, setMacroSeleccionada] = useState("");
+  const { data: mensajesData, mutate: mutateMensajes } = useSWR(
+    `/api/tickets/${id}/mensajes`,
+    fetcher
+  );
+  const [mensajeContenido, setMensajeContenido] = useState("");
+  const [enviandoMensaje, setEnviandoMensaje] = useState(false);
+  const [mensajeInterno, setMensajeInterno] = useState(false);
+  const { data: csatData, mutate: mutateCsat } = useSWR(
+    `/api/tickets/${id}/csat`,
+    fetcher
+  );
+  const [csatRating, setCsatRating] = useState<number | null>(null);
+  const [csatComment, setCsatComment] = useState("");
+  const [sendingCsat, setSendingCsat] = useState(false);
 
   // History
   const { data: historialData } = useSWR(`/api/tickets/${id}/historial`, fetcher);
@@ -200,6 +250,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
 
   // Users for assignment
   const { data: usersData } = useSWR(canEdit ? "/api/usuarios" : null, fetcher);
+  const { data: gruposData } = useSWR(
+    canEdit
+      ? "/api/departamentos?incluirUnidades=true&incluirUsuarios=false&soloActivos=true"
+      : null,
+    fetcher
+  );
+  const departamentos = gruposData?.departamentos ?? [];
+  const [departamentoId, setDepartamentoId] = useState("");
+  const [unidadId, setUnidadId] = useState("");
+  const [savingGrupo, setSavingGrupo] = useState(false);
+  const [parentTicketId, setParentTicketId] = useState("");
+  const [savingParent, setSavingParent] = useState(false);
+  const departamentoSeleccionado = departamentos.find(
+    (dep: any) => dep.id === departamentoId
+  );
+  const unidades = departamentoSeleccionado?.unidades ?? [];
   const [assigningUser, setAssigningUser] = useState(false);
   const [editValues, setEditValues] = useState({
     title: "",
@@ -211,7 +277,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   });
   const [savingEdits, setSavingEdits] = useState(false);
   const isAssignee = ticket?.assignedTo?.id === session?.user?.id;
+  const isOwner = ticket?.owner?.id === session?.user?.id;
   const canWork = role === "USER" && isAssignee;
+  const canSeeInternalMessages = role === "ADMIN" || role === "SUPERVISOR" || isAssignee;
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -242,6 +310,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       status: ticket.status ?? "CREADO",
       assignee: ticket.assignee ?? "",
     });
+    setDepartamentoId(ticket.departamento?.id ?? "");
+    setUnidadId(ticket.unidad?.id ?? "");
+    setParentTicketId(ticket.parentTicket?.id ?? "");
   }, [ticket]);
 
   const handleChangeStatus = async (newStatus: string) => {
@@ -415,6 +486,63 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     );
   };
 
+  const handleEnviarMensaje = async () => {
+    if (!mensajeContenido.trim()) return;
+    setEnviandoMensaje(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}/mensajes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contenido: mensajeContenido.trim(),
+          esInterno: mensajeInterno && canSeeInternalMessages,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo enviar el mensaje");
+        return;
+      }
+      setMensajeContenido("");
+      setMensajeInterno(false);
+      mutateMensajes();
+    } catch (error) {
+      alert("Error al enviar el mensaje");
+    } finally {
+      setEnviandoMensaje(false);
+    }
+  };
+
+  const handleEnviarCsat = async () => {
+    if (!csatRating) {
+      alert("Selecciona una calificacion");
+      return;
+    }
+    setSendingCsat(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}/csat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: csatRating,
+          comentario: csatComment.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo enviar la encuesta");
+        return;
+      }
+      setCsatRating(null);
+      setCsatComment("");
+      mutateCsat();
+    } catch (error) {
+      alert("Error al enviar la encuesta");
+    } finally {
+      setSendingCsat(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteMotivo.trim()) {
       alert("Debes ingresar un motivo para eliminar el ticket");
@@ -479,6 +607,63 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  const handleGuardarGrupo = async () => {
+    if (!canEdit) {
+      alert("No tienes permisos para actualizar el grupo");
+      return;
+    }
+    setSavingGrupo(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          departamentoId: departamentoId || null,
+          unidadId: unidadId || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo actualizar el grupo");
+        return;
+      }
+      const data = await res.json();
+      setTicket(data.ticket);
+    } catch (error) {
+      alert("Error al actualizar el grupo");
+    } finally {
+      setSavingGrupo(false);
+    }
+  };
+
+  const handleGuardarParent = async () => {
+    if (!canEdit) {
+      alert("No tienes permisos para actualizar la relacion");
+      return;
+    }
+    setSavingParent(true);
+    try {
+      const res = await fetch(`/api/tickets/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentTicketId: parentTicketId.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "No se pudo actualizar la relacion");
+        return;
+      }
+      const data = await res.json();
+      setTicket(data.ticket);
+    } catch (error) {
+      alert("Error al actualizar la relacion");
+    } finally {
+      setSavingParent(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -530,6 +715,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const resolutionDueAt = ticket.sla?.resolutionDueAt ?? null;
   const responseRemaining = ticket.sla?.responseRemainingMinutes ?? null;
   const resolutionRemaining = ticket.sla?.resolutionRemainingMinutes ?? null;
+  const csatSurvey = csatData?.survey ?? null;
+  const canSendCsat = Boolean(isOwner && ticket.status === "FINALIZADO" && !csatSurvey);
   const timeFields = [
     { label: "Asignado", value: ticket.assignedAt },
     { label: "Inicio", value: ticket.startedAt },
@@ -538,6 +725,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     { label: "Reabierto", value: ticket.reopenedAt },
     { label: "Primera respuesta", value: ticket.firstResponseAt },
   ];
+  const grupoChanged =
+    (ticket.departamento?.id ?? "") !== departamentoId ||
+    (ticket.unidad?.id ?? "") !== unidadId;
+  const parentChanged =
+    (ticket.parentTicket?.id ?? "") !== parentTicketId.trim();
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-50">
@@ -586,6 +778,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                       Prioridad: {priorityLabels[ticket.priority] || ticket.priority}
                     </Badge>
                     <Badge variant="outline" className="border-white/20 text-slate-600 dark:text-slate-300">
+                      Canal: {ticket.canal ? channelLabels[ticket.canal] : "Portal"}
+                    </Badge>
+                    <Badge variant="outline" className="border-white/20 text-slate-600 dark:text-slate-300">
                       {ticket.type}
                     </Badge>
                   </div>
@@ -598,7 +793,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
               )}
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-1">
                   <p className="text-xs text-slate-500">Creado</p>
                   <p className="font-medium">{formatDate(ticket.createdAt)}</p>
@@ -606,6 +801,14 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 <div className="space-y-1">
                   <p className="text-xs text-slate-500">Última actualización</p>
                   <p className="font-medium">{formatDate(ticket.updatedAt)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500">Canal</p>
+                  <p className="font-medium">{ticket.canal ? channelLabels[ticket.canal] : "Portal"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500">Referencia externa</p>
+                  <p className="font-medium">{ticket.externalRef || "Sin referencia"}</p>
                 </div>
               </div>
 
@@ -882,7 +1085,288 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-lg">Grupo y relacion</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Controla el acceso y vincula tickets relacionados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-slate-400">Departamento</Label>
+                  {canEdit ? (
+                    <Select
+                      value={departamentoId || "none"}
+                      onValueChange={(value) => {
+                        const next = value === "none" ? "" : value;
+                        setDepartamentoId(next);
+                        if (!next) {
+                          setUnidadId("");
+                          return;
+                        }
+                        const nextDept = departamentos.find((dep: any) => dep.id === next);
+                        const nextUnits = nextDept?.unidades ?? [];
+                        if (unidadId && !nextUnits.some((unidad: any) => unidad.id === unidadId)) {
+                          setUnidadId("");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Seleccionar departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin departamento</SelectItem>
+                        {departamentos.map((dep: any) => (
+                          <SelectItem key={dep.id} value={dep.id}>
+                            {dep.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {ticket.departamento?.nombre || "Sin departamento"}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-slate-400">Unidad</Label>
+                  {canEdit ? (
+                    <Select
+                      value={unidadId || "none"}
+                      onValueChange={(value) => setUnidadId(value === "none" ? "" : value)}
+                      disabled={!departamentoSeleccionado}
+                    >
+                      <SelectTrigger className="w-full border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white">
+                        <SelectValue placeholder="Seleccionar unidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin unidad</SelectItem>
+                        {unidades.map((unidad: any) => (
+                          <SelectItem key={unidad.id} value={unidad.id}>
+                            {unidad.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {ticket.unidad?.nombre || "Sin unidad"}
+                    </p>
+                  )}
+                </div>
+                {canEdit && grupoChanged && (
+                  <Button
+                    onClick={handleGuardarGrupo}
+                    disabled={savingGrupo}
+                    className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
+                  >
+                    {savingGrupo ? "Guardando..." : "Guardar grupo"}
+                  </Button>
+                )}
+                <div className="border-t border-white/10 pt-4 space-y-2">
+                  <Label className="text-xs text-slate-400">Ticket padre</Label>
+                  {ticket.parentTicket ? (
+                    <Link
+                      href={`/tickets/${ticket.parentTicket.id}`}
+                      className="text-sm text-indigo-600 dark:text-indigo-300 hover:underline"
+                    >
+                      {ticket.parentTicket.title} (#{ticket.parentTicket.folio})
+                    </Link>
+                  ) : (
+                    <p className="text-sm text-slate-500">Sin ticket padre</p>
+                  )}
+                  {canEdit && (
+                    <div className="space-y-2">
+                      <Input
+                        value={parentTicketId}
+                        onChange={(e) => setParentTicketId(e.target.value)}
+                        placeholder="ID del ticket padre"
+                        className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white"
+                      />
+                      {parentChanged && (
+                        <Button
+                          onClick={handleGuardarParent}
+                          disabled={savingParent}
+                          className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
+                        >
+                          {savingParent ? "Guardando..." : "Guardar relacion"}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-slate-400">Tickets hijos</Label>
+                  {ticket.childTickets && ticket.childTickets.length > 0 ? (
+                    <div className="space-y-1">
+                      {ticket.childTickets.map((child) => (
+                        <Link
+                          key={child.id}
+                          href={`/tickets/${child.id}`}
+                          className="block text-sm text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300"
+                        >
+                          #{child.folio} - {child.title}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">Sin tickets relacionados.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MessageCircle className="h-5 w-5 text-indigo-400" />
+                Conversacion
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                Mensajes hacia el solicitante por canal {ticket.canal ? channelLabels[ticket.canal] : "Portal"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Textarea
+                  className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
+                  placeholder="Escribe un mensaje..."
+                  rows={3}
+                  value={mensajeContenido}
+                  onChange={(e) => setMensajeContenido(e.target.value)}
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {canSeeInternalMessages && (
+                    <div className="flex items-center gap-2">
+                      <Switch checked={mensajeInterno} onCheckedChange={setMensajeInterno} />
+                      <Label className="text-sm text-slate-600 dark:text-slate-300">
+                        Mensaje interno
+                      </Label>
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleEnviarMensaje}
+                    disabled={enviandoMensaje || !mensajeContenido.trim()}
+                    className="bg-indigo-600 text-slate-900 dark:text-white hover:bg-indigo-700"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    {enviandoMensaje ? "Enviando..." : "Enviar mensaje"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {mensajesData?.mensajes?.length > 0 ? (
+                  mensajesData.mensajes.map((mensaje: any) => (
+                    <div
+                      key={mensaje.id}
+                      className="rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span>{mensaje.direccion === "OUT" ? "Salida" : "Entrada"}</span>
+                          {mensaje.esInterno && canSeeInternalMessages && (
+                            <Badge variant="secondary">Interno</Badge>
+                          )}
+                          <span>{mensaje.canal ? channelLabels[mensaje.canal] : "Portal"}</span>
+                        </div>
+                        <span className="text-xs text-slate-500">
+                          {new Date(mensaje.createdAt).toLocaleDateString("es-CL", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                        {mensaje.contenido}
+                      </p>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {(mensaje.autor?.name || mensaje.autor?.email || mensaje.autorNombre || "Sistema")}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                    Aun no hay mensajes en este hilo.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Star className="h-5 w-5 text-amber-400" />
+                Satisfaccion
+              </CardTitle>
+              <CardDescription className="text-slate-300">
+                Evaluacion del solicitante al cierre del ticket
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {csatSurvey ? (
+                <div className="space-y-2 rounded-lg border border-white/15 bg-white/80 dark:bg-white/5 p-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{csatSurvey.rating}/5</Badge>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Calificacion registrada
+                    </span>
+                  </div>
+                  {csatSurvey.comentario && (
+                    <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
+                      {csatSurvey.comentario}
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500">
+                    {csatSurvey.createdBy?.name || csatSurvey.createdBy?.email || "Solicitante"}
+                  </p>
+                </div>
+              ) : canSendCsat ? (
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <Button
+                        key={value}
+                        type="button"
+                        variant={csatRating === value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCsatRating(value)}
+                        className={csatRating === value ? "bg-amber-500 text-white hover:bg-amber-600" : "border-white/20 text-slate-700 dark:text-slate-200 hover:bg-white/10"}
+                      >
+                        {value}
+                      </Button>
+                    ))}
+                  </div>
+                  <Textarea
+                    className="border-white/20 bg-white/90 dark:bg-white/10 text-slate-900 dark:text-white placeholder:text-slate-300"
+                    placeholder="Comentario (opcional)"
+                    rows={3}
+                    value={csatComment}
+                    onChange={(e) => setCsatComment(e.target.value)}
+                  />
+                  <Button
+                    onClick={handleEnviarCsat}
+                    disabled={sendingCsat}
+                    className="bg-amber-500 text-white hover:bg-amber-600"
+                  >
+                    {sendingCsat ? "Enviando..." : "Enviar encuesta"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-white/5 p-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                  No hay encuesta registrada.
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="border-white/10 bg-white/80 dark:bg-white/5 text-slate-900 dark:text-white shadow-xl backdrop-blur">
             <CardHeader>

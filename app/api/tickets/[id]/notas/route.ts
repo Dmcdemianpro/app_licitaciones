@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canAccessTicket } from "@/lib/ticket-access";
 
 export async function GET(
   req: Request,
@@ -32,11 +33,21 @@ export async function GET(
       );
     }
 
-    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+    const role = session.user.role ?? "";
+    if (role === "USER" && ticket.assigneeId !== session.user.id) {
       return NextResponse.json(
         { error: "No tienes permisos para ver las notas de este ticket" },
         { status: 403 }
       );
+    }
+    if (role !== "USER") {
+      const canAccess = await canAccessTicket(session.user.id, role, id);
+      if (!canAccess) {
+        return NextResponse.json(
+          { error: "No tienes permisos para ver las notas de este ticket" },
+          { status: 403 }
+        );
+      }
     }
 
     const notas = await prisma.nota.findMany({
@@ -89,11 +100,21 @@ export async function POST(
       );
     }
 
-    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+    const role = session.user.role ?? "";
+    if (role === "USER" && ticket.assigneeId !== session.user.id) {
       return NextResponse.json(
         { error: "No tienes permisos para agregar notas a este ticket" },
         { status: 403 }
       );
+    }
+    if (role !== "USER") {
+      const canAccess = await canAccessTicket(session.user.id, role, id);
+      if (!canAccess) {
+        return NextResponse.json(
+          { error: "No tienes permisos para agregar notas a este ticket" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await req.json();

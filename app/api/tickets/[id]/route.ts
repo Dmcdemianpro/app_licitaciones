@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { ticketUpdateSchema } from "@/lib/validations/tickets";
 import { buildSlaDates, getSlaStatus } from "@/lib/sla";
 import { startTicketScheduler } from "@/lib/ticket-scheduler";
+import { canAccessTicket } from "@/lib/ticket-access";
 
 startTicketScheduler();
 
@@ -37,6 +38,39 @@ export async function GET(
             email: true,
           },
         },
+        departamento: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            color: true,
+          },
+        },
+        unidad: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            departamentoId: true,
+          },
+        },
+        parentTicket: {
+          select: {
+            id: true,
+            folio: true,
+            title: true,
+            status: true,
+          },
+        },
+        childTickets: {
+          select: {
+            id: true,
+            folio: true,
+            title: true,
+            status: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
@@ -47,11 +81,21 @@ export async function GET(
       );
     }
 
-    if (session.user.role === "USER" && ticket.assigneeId !== session.user.id) {
+    const role = session.user.role ?? "";
+    if (role === "USER" && ticket.assigneeId !== session.user.id) {
       return NextResponse.json(
         { error: "No tienes permisos para ver este ticket" },
         { status: 403 }
       );
+    }
+    if (role !== "USER") {
+      const canAccess = await canAccessTicket(session.user.id, role, id);
+      if (!canAccess) {
+        return NextResponse.json(
+          { error: "No tienes permisos para ver este ticket" },
+          { status: 403 }
+        );
+      }
     }
 
     // Agregar folioFormateado
@@ -99,9 +143,37 @@ export async function PATCH(
         { status: 404 }
       );
     }
+    if (isUser && ticketAnterior.assigneeId !== session.user.id) {
+      return NextResponse.json(
+        { error: "No tienes permisos para editar este ticket" },
+        { status: 403 }
+      );
+    }
+    if (!isUser) {
+      const canAccess = await canAccessTicket(session.user.id, role, id);
+      if (!canAccess) {
+        return NextResponse.json(
+          { error: "No tienes permisos para editar este ticket" },
+          { status: 403 }
+        );
+      }
+    }
 
     const allowedFields = isManager
-      ? ["title", "description", "type", "priority", "status", "assignee", "assigneeId"]
+      ? [
+          "title",
+          "description",
+          "type",
+          "priority",
+          "status",
+          "assignee",
+          "assigneeId",
+          "canal",
+          "externalRef",
+          "departamentoId",
+          "unidadId",
+          "parentTicketId",
+        ]
       : ["status"];
 
     if (isUser) {
@@ -142,6 +214,31 @@ export async function PATCH(
 
     if (typeof updateData.assignee === "string") {
       updateData.assignee = updateData.assignee.trim() || null;
+    }
+    if (typeof updateData.departamentoId === "string") {
+      updateData.departamentoId = updateData.departamentoId.trim() || null;
+    }
+    if (typeof updateData.unidadId === "string") {
+      updateData.unidadId = updateData.unidadId.trim() || null;
+    }
+    if (typeof updateData.parentTicketId === "string") {
+      updateData.parentTicketId = updateData.parentTicketId.trim() || null;
+    }
+
+    if (updateData.parentTicketId) {
+      if (updateData.parentTicketId === id) {
+        return NextResponse.json(
+          { error: "El ticket padre no puede ser el mismo ticket" },
+          { status: 400 }
+        );
+      }
+      const parent = await prisma.ticket.findUnique({
+        where: { id: updateData.parentTicketId as string },
+        select: { id: true },
+      });
+      if (!parent) {
+        return NextResponse.json({ error: "Ticket padre no encontrado" }, { status: 400 });
+      }
     }
 
     if (
@@ -340,6 +437,39 @@ export async function PATCH(
             name: true,
             email: true,
           },
+        },
+        departamento: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            color: true,
+          },
+        },
+        unidad: {
+          select: {
+            id: true,
+            nombre: true,
+            codigo: true,
+            departamentoId: true,
+          },
+        },
+        parentTicket: {
+          select: {
+            id: true,
+            folio: true,
+            title: true,
+            status: true,
+          },
+        },
+        childTickets: {
+          select: {
+            id: true,
+            folio: true,
+            title: true,
+            status: true,
+          },
+          orderBy: { createdAt: "desc" },
         },
       },
     });

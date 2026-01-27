@@ -45,6 +45,11 @@ const menuItems = [
     icon: Bell,
   },
   {
+    title: "Conocimiento",
+    url: "/conocimiento",
+    icon: FileText,
+  },
+  {
     title: "Reportes",
     url: "/reportes",
     icon: BarChart3,

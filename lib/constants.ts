@@ -33,6 +33,16 @@ export const TICKET_PRIORITY = {
 
 export type TicketPriority = typeof TICKET_PRIORITY[keyof typeof TICKET_PRIORITY]
 
+// Canales de Ticket
+export const TICKET_CHANNEL = {
+  PORTAL: 'PORTAL',
+  EMAIL: 'EMAIL',
+  CHAT: 'CHAT',
+  WHATSAPP: 'WHATSAPP',
+} as const
+
+export type TicketChannel = typeof TICKET_CHANNEL[keyof typeof TICKET_CHANNEL]
+
 // Estados de Licitación
 export const LICITACION_ESTADO = {
   EN_PREPARACION: 'EN_PREPARACION',

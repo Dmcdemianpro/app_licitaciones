@@ -6,21 +6,42 @@ import { ticketCreateSchema } from "@/lib/validations/tickets";
 import { buildSlaDates, getSlaStatus } from "@/lib/sla";
 import { resolveAutoAssignee } from "@/lib/ticket-automation";
 import { startTicketScheduler } from "@/lib/ticket-scheduler";
+import { buildTicketAccessWhere, getDefaultTicketGrupo, getUserTicketScope } from "@/lib/ticket-access";
 
 startTicketScheduler();
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    const isTechnician = session.user.role === "USER";
-    const where = {
+    const { searchParams } = new URL(req.url);
+    const canal = searchParams.get("canal");
+
+    const role = session.user.role ?? "";
+    const isTechnician = role === "USER";
+    const isAdmin = role === "ADMIN";
+    let accessWhere: Record<string, unknown> | null = null;
+
+    if (!isAdmin && !isTechnician) {
+      const scope = await getUserTicketScope(session.user.id);
+      accessWhere = buildTicketAccessWhere(scope, session.user.id);
+      if (!accessWhere) {
+        return NextResponse.json([]);
+      }
+    }
+
+    const where: Record<string, unknown> = {
       deletedAt: null,
       ...(isTechnician ? { assigneeId: session.user.id } : {}),
+      ...(canal ? { canal } : {}),
     };
+
+    if (accessWhere) {
+      Object.assign(where, accessWhere);
+    }
 
     const tickets = await prisma.ticket.findMany({
       where,
@@ -80,6 +101,42 @@ export async function POST(req: Request) {
     const assignedAt = finalAssigneeId ? new Date() : null;
     const initialStatus = finalAssigneeId ? "ASIGNADO" : "CREADO";
 
+    const role = session.user.role ?? "";
+    const isManager = role === "ADMIN" || role === "SUPERVISOR";
+    const defaultGrupo = await getDefaultTicketGrupo(session.user.id);
+    const hasDepartamento = Object.prototype.hasOwnProperty.call(parsed.data, "departamentoId");
+    const hasUnidad = Object.prototype.hasOwnProperty.call(parsed.data, "unidadId");
+    const departamentoInput =
+      typeof parsed.data.departamentoId === "string"
+        ? parsed.data.departamentoId.trim() || null
+        : null;
+    const unidadInput =
+      typeof parsed.data.unidadId === "string"
+        ? parsed.data.unidadId.trim() || null
+        : null;
+    const departamentoId = isManager
+      ? (hasDepartamento ? departamentoInput : defaultGrupo.departamentoId)
+      : defaultGrupo.departamentoId;
+    const unidadId = isManager
+      ? (hasUnidad ? unidadInput : defaultGrupo.unidadId)
+      : defaultGrupo.unidadId;
+
+    const parentInput =
+      typeof parsed.data.parentTicketId === "string"
+        ? parsed.data.parentTicketId.trim()
+        : "";
+    const parentTicketId = isManager ? parentInput || null : null;
+
+    if (parentTicketId) {
+      const parent = await prisma.ticket.findUnique({
+        where: { id: parentTicketId },
+        select: { id: true },
+      });
+      if (!parent) {
+        return NextResponse.json({ error: "Ticket padre no encontrado" }, { status: 400 });
+      }
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         title: parsed.data.title,
@@ -90,6 +147,11 @@ export async function POST(req: Request) {
         assignee: finalAssigneeName,
         assigneeId: finalAssigneeId,
         ownerId: session.user.id,
+        canal: parsed.data.canal,
+        externalRef: parsed.data.externalRef ?? null,
+        departamentoId,
+        unidadId,
+        parentTicketId,
         assignedAt,
         slaResponseMinutes: slaDates.responseMinutes,
         slaResolutionMinutes: slaDates.resolutionMinutes,

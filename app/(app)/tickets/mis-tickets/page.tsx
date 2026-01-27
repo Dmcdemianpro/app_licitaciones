@@ -33,6 +33,7 @@ type Ticket = {
   priority: "ALTA" | "MEDIA" | "BAJA";
   status: "CREADO" | "ASIGNADO" | "EN_PROGRESO" | "PENDIENTE_VALIDACION" | "FINALIZADO" | "REABIERTO";
   assignee?: string | null;
+  canal?: "PORTAL" | "EMAIL" | "CHAT" | "WHATSAPP";
   assignedTo?: {
     id: string;
     name: string | null;
@@ -76,6 +77,13 @@ const slaLabels: Record<TicketSla["overallStatus"], string> = {
   breached: "Vencido",
   met: "Cumplido",
   none: "Sin SLA",
+};
+
+const channelLabels: Record<NonNullable<Ticket["canal"]>, string> = {
+  PORTAL: "Portal",
+  EMAIL: "Email",
+  CHAT: "Chat",
+  WHATSAPP: "WhatsApp",
 };
 
 type StatusFilter = "all" | "pending" | Ticket["status"];
@@ -348,6 +356,7 @@ export default function MisTicketsPage() {
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Prioridad</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Estado</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">SLA</TableHead>
+                        <TableHead className="font-semibold text-slate-900 dark:text-white">Canal</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Creado por</TableHead>
                         <TableHead className="font-semibold text-slate-900 dark:text-white">Fecha</TableHead>
                       </TableRow>
@@ -393,6 +402,9 @@ export default function MisTicketsPage() {
                                 </div>
                               );
                             })()}
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600 dark:text-slate-300">
+                            {ticket.canal ? channelLabels[ticket.canal] : "Portal"}
                           </TableCell>
                           <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                             {ticket.owner.name || ticket.owner.email}

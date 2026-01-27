@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TICKET_STATUS, TICKET_PRIORITY } from "@/lib/constants";
+import { TICKET_STATUS, TICKET_PRIORITY, TICKET_CHANNEL } from "@/lib/constants";
 
 const statusEnum = z.enum([
   TICKET_STATUS.CREADO,
@@ -16,18 +16,31 @@ const priorityEnum = z.enum([
   TICKET_PRIORITY.BAJA,
 ]);
 
+const channelEnum = z.enum([
+  TICKET_CHANNEL.PORTAL,
+  TICKET_CHANNEL.EMAIL,
+  TICKET_CHANNEL.CHAT,
+  TICKET_CHANNEL.WHATSAPP,
+]);
+
 const baseTicketSchema = z.object({
   title: z.string().min(3, "Título debe tener al menos 3 caracteres").max(255),
   description: z.string().min(5, "Descripción requerida"),
   type: z.string().min(2, "Tipo requerido").max(100),
   priority: priorityEnum,
+  canal: channelEnum.optional(),
   status: statusEnum.optional(),
   assignee: z.string().max(255).optional().nullable(),
   assigneeId: z.string().max(100).optional().nullable(),
+  externalRef: z.string().max(255).optional().nullable(),
+  departamentoId: z.string().max(100).optional().nullable(),
+  unidadId: z.string().max(100).optional().nullable(),
+  parentTicketId: z.string().max(100).optional().nullable(),
 });
 
 export const ticketCreateSchema = baseTicketSchema.extend({
   status: statusEnum.default(TICKET_STATUS.CREADO),
+  canal: channelEnum.default(TICKET_CHANNEL.PORTAL),
 });
 
 export const ticketUpdateSchema = baseTicketSchema.partial();
@@ -39,6 +52,7 @@ export const ticketFilterSchema = z.object({
   type: z.string().optional(),
   assignee: z.string().optional(),
   ownerId: z.string().optional(),
+  canal: channelEnum.optional(),
   q: z.string().optional(), // búsqueda por texto
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(10),
