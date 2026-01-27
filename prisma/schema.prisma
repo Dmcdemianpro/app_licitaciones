@@ -132,7 +132,7 @@ model Ticket {
   deletedBy      User?             @relation("TicketDeletedBy", fields: [deletedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
   departamento  Departamento?      @relation("TicketDepartamento", fields: [departamentoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   unidad        Unidad?            @relation("TicketUnidad", fields: [unidadId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  parentTicket  Ticket?            @relation("TicketParent", fields: [parentTicketId], references: [id], onDelete: SetNull)
+  parentTicket  Ticket?            @relation("TicketParent", fields: [parentTicketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   childTickets  Ticket[]           @relation("TicketParent")
   documentos     Documento[]
   notas          Nota[]
