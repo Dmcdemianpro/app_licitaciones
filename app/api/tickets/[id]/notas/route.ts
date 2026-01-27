@@ -90,7 +90,12 @@ export async function POST(
 
     const ticket = await prisma.ticket.findFirst({
       where: { id, deletedAt: null },
-      select: { assigneeId: true },
+      select: {
+        assigneeId: true,
+        firstResponseAt: true,
+        slaResponseDueAt: true,
+        slaResponseBreachedAt: true,
+      },
     });
 
     if (!ticket) {
