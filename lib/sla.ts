@@ -57,11 +57,16 @@ type SlaStatusResult = {
   resolutionRemainingMinutes: number | null;
 };
 
+type SlaCalcResult = {
+  status: SlaStatus;
+  remainingMinutes: number | null;
+};
+
 function calculateStatus(
   dueAt: Date | null,
   totalMinutes: number,
   completedAt: Date | null
-): { status: SlaStatus; remainingMinutes: number | null } {
+): SlaCalcResult {
   if (!dueAt) {
     return { status: "none" as SlaStatus, remainingMinutes: null };
   }
@@ -103,8 +108,16 @@ export function getSlaStatus(input: SlaStatusInput): SlaStatusResult {
   const firstResponseAt = parseDate(input.firstResponseAt);
   const closedAt = parseDate(input.closedAt);
 
-  const response = calculateStatus(responseDueAt, responseMinutesValue, firstResponseAt);
-  const resolution = calculateStatus(resolutionDueAt, resolutionMinutesValue, closedAt);
+  const response: SlaCalcResult = calculateStatus(
+    responseDueAt,
+    responseMinutesValue,
+    firstResponseAt
+  );
+  const resolution: SlaCalcResult = calculateStatus(
+    resolutionDueAt,
+    resolutionMinutesValue,
+    closedAt
+  );
 
   let overall: SlaStatus = "ok";
   if (closedAt) {
